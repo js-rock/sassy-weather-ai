@@ -1,0 +1,6 @@
+venv/
+_Archive/
+.env
+weather_history.txt
+__pycache__/
+*pyc
