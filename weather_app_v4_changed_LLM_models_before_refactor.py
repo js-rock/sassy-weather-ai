@@ -1,13 +1,10 @@
 #=============================================================================
-#PROJECT: WeatherApp | Version 03.02
+#PROJECT: WeatherApp | Version 04
 #=============================================================================
 #STATUS LOG:
-#mark03 is 13-18 -- added LLM - 20260310
-#[2026-03-12][FIXED] exit loop re-asking of persona
-#[2026-03-12][FIXED] voice doesn't play on second city input
-#   Fix was to downgrade pyttsx3 from 2.99 to 2.91 via cmd
-#[2026-03-12][FIXED] UTC issues still persist - fix in #18
+#mark03.02 is 18- -- 
 #[2026-03-11][PENDING] custom voices? maybe not worth it right now
+#2023-03-14 changed AI model Deepseek-r1:8b to Gemma3:4b for quicker performance
 #TO DO:
 #Convert pyttsx3 to edge-tts for voice custmisation
 #Use a microphone for verbal answers as well as typed
@@ -72,7 +69,7 @@ while True:
         print("  SYSTEM SHUTDOWN COMPLETE  ")
         print("="*30)
         break
-    choose_persona = input("\nWhich personality do you prefer? 1.Sassy, 2.Classy, or 3.Noob Photographer? : ").lower()
+    choose_persona = input("\nWhich personality do you prefer? 1.Sassy, 2.Classy, or 3.Noob Photographer? Enter a number 1-3: ").lower()
     
     #3 Ask user for city <----- Replaced in #7
 
@@ -107,7 +104,7 @@ while True:
             sunrise = datetime.fromtimestamp(sunrise_ts, timezone.utc).strftime('%H:%M') #<----- updated in #18 as per API request changing standards
             sunset = datetime.fromtimestamp(sunset_ts, timezone.utc).strftime('%H:%M') #<----- updated in #18 as per API request changing standards
             #14 <--- added later --- prep prompt for AI LLM
-            weather_prompt_for_ai_llm =(
+            weather_prompt_for_ai_llm = (
                 f"The Weather in {city.title()} is {temp} ºC, {desc}, with wind at {wind_speed} meters per second."
                 f"IMPORTANT: Do not use abbreviations like 'm/s' or 'ºC' in your response, "
                 f"write them out fully as 'meters per second' and 'degrees Celsius'."
@@ -116,7 +113,7 @@ while True:
             try:
                 import ollama
                 user_selected_persona = personas.get(choose_persona.lower(), ai_sass)
-                llm_response = ollama.chat(model='deepseek-r1:8b', messages=[
+                llm_response = ollama.chat(model='gemma3:4b', messages=[
                     {'role': 'system', 'content': user_selected_persona},
                     {'role': 'user', 'content': weather_prompt_for_ai_llm}
                     ])
