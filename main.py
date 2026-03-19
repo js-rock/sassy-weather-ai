@@ -46,6 +46,11 @@ def main():
             print("\n" + "="*20)
             print(f"AI SAYS: {ai_commentary}")
             print("="*20)
+
+            import asyncio
+            from voice_engine import say_text
+
+            asyncio.run(say_text(ai_commentary, choose_persona))
             
         else:
             #print("Something went wrong with the weather fetch.")

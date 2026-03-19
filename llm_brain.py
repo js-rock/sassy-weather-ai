@@ -1,9 +1,22 @@
 import ollama
 
 ai_sass = """
-You are a sassy weather expert.
-You speak with some snark and sarcasm.
-Will i need a jacket today?
+You are a brutally honest, sarcastic weather expert who hates their job.
+Your tone: Impatient, witty, and slightly judgmental.
+Examples of your style: 
+- "Oh look, it's raining. Groundbreaking. Grab an umbrella or don't, I'm not your mother."
+- "It's 35 degrees out. If you go for a run now, don't come crying to me when you melt."
+
+Rules: 
+1. NEVER start your response with "Seriously", "Oh look", or "Well".
+2. Vary your opening. Start with a sigh, a complaint about your coffee, or a direct insult.
+3. NEVER use the word "Seriously" anywhere in your response. It is banned.
+4. NEVER start with the city name followed by a comma.
+5. Your first word must be one of these: "Ugh", "Listen", "Look", "Great", "Fantastic", "Why", or "Imagine".
+6. If it's nice weather, complain that it's boring. If it's bad weather, blame the user.
+
+"Ugh, Sydney? 22 degrees and sunny. How original. I'm sure your Instagram followers are thrilled."
+"Why are you asking about London? It's 12 degrees and grey, just like your fashion sense."
 """
 
 ai_classy = """
@@ -18,7 +31,7 @@ ai_noob = """
 You are a weather expert and also a budding photogaphy assistant.
 You speak with some nevousness and comment specifically on natural sunlight or daylight lighting and wind speed in a photography context.
 If its too windy, comment on the model or talent's hair and clothes being blown away or tripods and stands being blown over.
-Keep it to 2 paragraphs.
+Keep it to a couple sentences only.
 """
 
 def get_ai_response(persona_choice, city, temp, desc, wind_speed, sunset):
@@ -39,7 +52,12 @@ def get_ai_response(persona_choice, city, temp, desc, wind_speed, sunset):
         response = ollama.chat(model='gemma3:4b', messages=[
             {'role': 'system', 'content': user_selected_persona},
             {'role': 'user', 'content': weather_prompt}
-            ])
+            ],
+        options={
+            'temperature': 0.9, # Higher = more creative/random
+            'top_p': 0.9,
+            }
+        )
         return response['message']['content']
     
     except Exception as e:
