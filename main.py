@@ -1,6 +1,8 @@
 from weather_api import get_weather_data
 from datetime import datetime, timezone
 from llm_brain import get_ai_response
+import asyncio
+from voice_engine import say_text
 
 def main():
     print("\n--- SASSY WEATHER SYSTEM ONLINE ---")
@@ -42,18 +44,14 @@ def main():
             timestamp = datetime.now().strftime("%y-%m-%d-%H:%M")
 
             # Get the AI's take on the weather
-            ai_commentary = get_ai_response(choose_persona, city, temp, desc, wind_speed, sunset)
-            print("\n" + "="*20)
-            print(f"AI SAYS: {ai_commentary}")
-            print("="*20)
-
-            import asyncio
-            from voice_engine import say_text
-
-            asyncio.run(say_text(ai_commentary, choose_persona))
+            ai_commentary, voice_to_use = get_ai_response(
+                choose_persona, city, temp, desc, wind_speed, sunset
+            )
+            print(f"\nWeather Report: \n{ai_commentary}")
+           
+            asyncio.run(say_text(ai_commentary, voice_to_use))
             
         else:
-            #print("Something went wrong with the weather fetch.")
             print("I couldn't find that city, are you making it up?")
 
 if __name__ == "__main__":
