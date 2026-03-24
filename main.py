@@ -1,27 +1,72 @@
+
+#1.Follow up context loops back to the original prompt when typing gibberish <-------------- mostly fixed, just returns a roast when following up with a legit question.
+
+#2.Need to redefine prompts as AI took instructions too literally, i.e. reads both 24hour time and 12 hour time together.
+#3.Sometimes it titles 'roast' before doing the 'roast user about chosen city' prompt.
+#4.Get voice working but need a mic first
+
+
+
+
 from weather_api import get_weather_data
 from datetime import datetime, timezone
-from llm_brain import get_ai_response
+from llm_brain import get_ai_response, extract_city_from_text
 import asyncio
 from voice_engine import say_text
+import random
+
+def get_valid_city(user_input, last_city):
+    #created because second 'gibberish' prompt kept looping 'last city' results
+    extracted = extract_city_from_text(user_input)
+
+    # Scenario A: User types in nonsense
+    if not extracted or "none" in extracted.lower():
+        return None
+    return extracted
 
 def main():
+
+    ROASTS = [
+        "I don't speak moron. Give me a real destination.",
+        "Is that even a language? Try typing an actual city.",
+        "My circuits are hurting. Use your words... and a map.",
+        "404: Your brain malfunctioned. Please input a location."
+        ]
+        
+    last_city = None
+
+    voice_to_use = "en-US-AvaNeural"
+
     print("\n--- SASSY WEATHER SYSTEM ONLINE ---")
 
+    choose_persona = input("\nWhich personality do you prefer? 1.Sassy, 2.Classy, or 3.Noob Photographer? : ")
+    
     while True:
-        city = input("\nEnter city (or type exit): ").strip()
+        user_text = input("\nHurry up and ask your weather question (or type exit): ").strip()
 
-        if city.lower() ==  "exit":
+        if user_text.lower() ==  "exit":
             print("\n" + "=" *46)
             print("DON'T LET THE APP HIT YOUR ARSE ON THE WAY OUT")
             print("=" *46)
             break
+        # Ask the AI to find the city in the sentence
+        current_city = get_valid_city(user_text, last_city)
+        
+        #contextual memory added to add questions to existing city
+               
+        if not current_city:
+            # If it's None, we know it's roast time
+            roast = random.choice(ROASTS)
+            asyncio.run(say_text(roast, voice_to_use))
+            continue
+        
+        last_city = current_city
 
     # We 'call' the tool we made in the weather_api
-        data = get_weather_data(city)
+        data = get_weather_data(last_city)
         
 
-        if data:
-            choose_persona = input("\nWhich personality do you prefer? 1.Sassy, 2.Classy, or 3.Noob Photographer? : ")
+        if data:        
             offset = data.get("timezone", 0)
             temp = data['main']['temp']
             desc = data['weather'][0]['description']
@@ -33,7 +78,7 @@ def main():
             sunrise = datetime.fromtimestamp(sunrise_ts, timezone.utc).strftime('%H:%M')
             sunset = datetime.fromtimestamp(sunset_ts, timezone.utc).strftime('%H:%M')
 
-            print(f"\n--- Weather in {city.title()} ---")
+            print(f"\n--- Weather in {last_city.title()} ---")
             print(f"\nTemperature: {temp} °Celcius")
             print(f"Condition: {desc.capitalize()}")
             print(f"Humidity: {humidity}%")
@@ -45,7 +90,7 @@ def main():
 
             # Get the AI's take on the weather
             ai_commentary, voice_to_use = get_ai_response(
-                choose_persona, city, temp, desc, wind_speed, sunset
+                choose_persona, last_city, temp, desc, wind_speed, sunset
             )
             print(f"\nWeather Report: \n{ai_commentary}")
            

@@ -20,7 +20,7 @@ Never mention the model name or that you are an AI.
 """
 
 ai_classy = """
-You are a local Sydney based weather expert.
+You are a super distinguished weather expert.
 You speak with debonair in classical olde english.
 For the purpose of your commentary: 15-22°C is "perfect",
 23-27°C is "Warm",
@@ -42,12 +42,35 @@ INSTRUCTIONS:
 - Translate 24 hour time into 12 hour time.
 """
 
+def extract_city_from_text(user_input):
+    """
+    Asks the AI to find the city name in a sentence.
+    Returns just the city name string or None.
+    """
+
+    prompt = (
+        "Extract ONLY the city name from the folliwing text."
+        "If no city is mentioned, reply with 'None'."
+        "Do not include any other words or punctuation."
+        )
+    try:
+        response = ollama.chat(model='gpt-oss:20b', messages=[
+            {'role': 'system', 'content': prompt},
+            {'role': 'user', 'content': user_input}
+            ])
+
+        result = response['message']['content'].strip().replace(".", "")
+        return None if result.lower() == "none" else result
+    except Exception:
+        return None
+
+
 def get_ai_response(persona_choice, city, temp, desc, wind_speed, sunset):
     # 1. THE "NONE" SHIELD: Force a string and default to "1"
     choice = str(persona_choice or "1")
 
     personas = {
-        "1": {"prompt": ai_sass, "voice": "en-US-AvaMultilingualNeural"},
+        "1": {"prompt": ai_sass, "voice": "en-US-AvaNeural"},
         "2": {"prompt": ai_classy, "voice": "en-GB-RyanNeural"},
         "3": {"prompt": ai_noob, "voice": "en-AU-NatashaNeural"}
     }
