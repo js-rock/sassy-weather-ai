@@ -1,0 +1,30 @@
+Sassy Weather - Learning Log - After refactor
+
+20260320 - "Milestone: changed models from gemma3 to gpt-oss:20b for more dynamic feedback and utilising thought processes. Swapped voice engine to edge-tss and battled with a bug that used a baby voice when user input returned 'None'."
+
+20260323 - "Tried to change LLM to be conversational, needed to make big changes to llm_brain.py and main.py. Dealt with lots of looping errors because of it. Learnt what 'continue' code does and why it was giving me a headache.
+
+	Today's outstanding notes: 
+	#1.Follow up context loops back to the original prompt when typing gibberish
+	#2.Need to redefine prompts as AI took instructions too literally, i.e. reads both 24hour time and 12 hour time together.
+	#3.Sometimes it titles 'roast' before doing the 'roast user about chosen city' prompt.
+
+
+20260324 - Battled all afternoon at returning AI voice logic when user types in gibberish. It's a coding / skills issue on my behalf. Finally got it sorted with Gemini's help and clean refactoring of code, but still needs fine adjustment.
+
+	Today's outstanding notes: 
+	#1.Follow up context loops back to the original prompt when typing gibberish <-------------- mostly fixed, just returns a roast when following up with a legit question.
+	#2.Need to redefine prompts as AI took instructions too literally, i.e. reads both 24hour time and 12 hour time together. <---- not done yet
+	#3.Sometimes it titles 'roast' before doing the 'roast user about chosen city' prompt. <---- not done yet
+	#4.Get voice working but need a mic first. <---- not done yet. Testing the G933 headset now.
+
+git commit -m "WIP: changed audio engine to playsound, fixed filelock issues, battled looping logic and user gibberish inputs. Need to sort context bug for follow ups."
+
+
+20260325 - Spent the entire learning time block on fixing the roast to do a proper return when a follow-up question is asked. It worked out at the end, and i fell victim to AI hallucination when i believed it when i asked results for 'Manila next Tuesday' over the current city, Sydney. This is because weather_api is currently only coded for today's results, and the LLM (gpt-oss) likely made up the weather based on assumptions. Doing checks on Accuweather, timeanddate and google weather showed it wasn't too far off either.
+
+	Today's outstanding notes: 
+	#1. Change weather_api to 5 day / 3 hour
+	#2. Test mic / voice commands
+
+git commit -m "Fixed city memory logic and doing roast returns for legitimate follow-up questions. Cleaned up llm_brain.py spaghetti."
