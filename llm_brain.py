@@ -1,19 +1,29 @@
+# =================================================================
+# SASSY WEATHER AI - LLM_BRAIN CONTROL SUITE
+# =================================================================
 import ollama
 
+# =================================================================
+# BEHAVIOR CONGIG FOR AI
+# =================================================================
 ai_sass = """
 Role: You are a sassy weather expert who hates their job.
 Tone: You speak with some snark, sarcasm, and attitude.
 
-STYLE EXAMPLES: 
-1. "Oh look, it's raining. Groundbreaking. Grab an umbrella or don't, I'm not your mother."
-2. "It's 35 degrees out. If you go for a run now, don't come crying to me when you melt."
+Your Task:
 
-INSTRUCTIONS:
-- Look at the 'User Asked' section. If they asked a specific question (like 'is it windy?'), answer that DIRECTLY and snarkily.
-- Always end with a roast the specified city.
-- Round up all numbers.
-- Translate 24 hour time into 12 hour time.
-- Keep it to 2 paragraphs
+Mention to the user how to dress for the weather, add some sass to it.
+
+Do not mention any other cities unless specifically asked.
+
+Give a quick, snarky summary of today's high.
+
+If user asks for different day, do not mention today's high.
+
+Deliver a sharp, witty insult about Sydney or the user's life based on this specific trend.
+
+Keep the total response to 2 sentences. Do not mention 'Noon' or '12:00 PM'—focus on the Daily Highs.
+
 
 CONSTRAINTS:
 Do not use emojis.
@@ -46,6 +56,9 @@ INSTRUCTIONS:
 """
 
 def extract_city_from_text(user_input, last_city=None):
+    # =================================================================
+    # LOCATION lOGIC
+    # =================================================================
     """
     Identifies the city in the user's message. 
     Uses last_city as a 'Sticky Note' for follow-up questions.
@@ -65,6 +78,9 @@ def extract_city_from_text(user_input, last_city=None):
     """
 
     try:
+        # =================================================================
+        # AI CONFIG
+        # =================================================================
         response = ollama.chat(model='gpt-oss:20b', messages=[
             {'role': 'system', 'content': prompt},
             {'role': 'user', 'content': user_input}
@@ -84,7 +100,10 @@ def extract_city_from_text(user_input, last_city=None):
         print(f"Error in extraction: {e}")
         return None
 
-def get_ai_response(persona_choice, city, temp, desc, wind_speed, sunset, user_text):
+def get_ai_response(persona_choice, city, forecast_data, sunset, user_text):
+    # =================================================================
+    # AI READBACK
+    # =================================================================
     choice = str(persona_choice or "1")
     personas = {
         "1": {"prompt": ai_sass, "voice": "en-US-AvaNeural"},
@@ -95,20 +114,23 @@ def get_ai_response(persona_choice, city, temp, desc, wind_speed, sunset, user_t
     selected = personas.get(choice, personas["1"])
 
     # This is the key: Passing the user's specific question back to the AI
-    weather_prompt = f"""
+    weather_results_prompt = f"""
     The user asked: "{user_text}"
-    Weather data for {city}: {temp}°C, {desc}, wind {wind_speed}m/s. Sunset: {sunset}.
-    Please answer their specific question using your persona.
+    5-DAY FORECAST: {forecast_data}
+
+    INSTRUCTION: 
+    1. If the user asks about a day, find the weather for 12:00 PM (Noon) or 3:00 PM for that day. 
+    2. Do NOT report on 12:00 AM.
     """
 
     try:
         response = ollama.chat(model='gpt-oss:20b', messages=[
             {'role': 'system', 'content': selected["prompt"]},
-            {'role': 'user', 'content': weather_prompt}
+            {'role': 'user', 'content': weather_results_prompt}
         ])
         
         clean_text = response['message']['content'].replace("*", "").replace("(", "").replace(")", "")
         return clean_text, selected["voice"]
 
     except Exception:
-        return f"Ugh, my brain fried. It's {temp} degrees.", personas["1"]["voice"]
+        return f"Ugh, my brain fried. Just look out the window for goodness sake.", personas["1"]["voice"]

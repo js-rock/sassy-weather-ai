@@ -28,3 +28,21 @@ git commit -m "WIP: changed audio engine to playsound, fixed filelock issues, ba
 	#2. Test mic / voice commands
 
 git commit -m "Fixed city memory logic and doing roast returns for legitimate follow-up questions. Cleaned up llm_brain.py spaghetti."
+
+
+20260326 - Today was spent changing the LLM logic to return forecast weather, 5 days maximum as per OpenWweather API limit. But the LLM hallucinates with 40 points of data to 	return and returns jank. I verified it with cross checking OW's website. 
+	Tried prompt engineering, changing codes, nothing was fixing the hallucinations. Only thing i didn't try was for the LLM to return the maximum temp instead but that means 	it still dealing with a lot of data causing its confusion.
+
+	No git commit today.
+
+
+20260327 - Big day trying to solve logic and failures of future forecasts along with the complexities of adding different cities during secondary prompting. 
+	Settled for using Openweather's max temp in their API 3 hour forecasts, which causes a 2-3°C variance between raw API snapshots and "Official" web reports. 
+	Cross-verified with AccuWeather and determined the variance is a result of model smoothing vs. raw data points. Prioritized data depth (5-day forecast) over real-time synchronization for LLM personality grounding.
+
+	Outstanding tasks:
+	#1. Test mic / voice commands
+	#2. Revisit other personalities as they've been neglected to focus on 'sassy'
+	#3. "Tomorrow" follow up prompt currently a band aid
+
+git commit -m "git commit -m "Milestone: Transitioned from single-day snapshots to 5-day forecast logic with multi-city context sync."
