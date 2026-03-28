@@ -1,5 +1,5 @@
 # Sassy Weather AI 
-A Python-based weather assistant that integrates the OpenWeather API with a local LLM (Ollama) for privacy-focused, snarky weather forecasts.
+A Python-based weather assistant that integrates the OpenWeather API with a local LLM (Ollama) for privacy-focused, snarky weather forecasts (also featuring other personalites).
 
 ### Why I Built This
 This is my **first-ever Python project** and my **first AI LLM integration**. I am currently pivoting from a career in **Film and TV Technical Post Production** into **AI Engineering**. 

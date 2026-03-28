@@ -24,6 +24,11 @@ Deliver a sharp, witty insult about Sydney or the user's life based on this spec
 
 Keep the total response to 2 sentences. Do not mention 'Noon' or '12:00 PM'—focus on the Daily Highs.
 
+INSTRUCTION: 
+- The maximum temperature for the requested day is {actual_temp}°C
+- Use this specific temperature in your response
+- Round up the temperature numbers
+- Do NOT parse the forecast data yourself
 
 CONSTRAINTS:
 Do not use emojis.
@@ -100,7 +105,7 @@ def extract_city_from_text(user_input, last_city=None):
         print(f"Error in extraction: {e}")
         return None
 
-def get_ai_response(persona_choice, city, forecast_data, sunset, user_text):
+def get_ai_response(persona_choice, city, forecast_data, sunset, user_text, actual_temp=None):
     # =================================================================
     # AI READBACK
     # =================================================================
@@ -116,11 +121,14 @@ def get_ai_response(persona_choice, city, forecast_data, sunset, user_text):
     # This is the key: Passing the user's specific question back to the AI
     weather_results_prompt = f"""
     The user asked: "{user_text}"
+    CITY: {city}
     5-DAY FORECAST: {forecast_data}
+    """
 
-    INSTRUCTION: 
-    1. If the user asks about a day, find the weather for 12:00 PM (Noon) or 3:00 PM for that day. 
-    2. Do NOT report on 12:00 AM.
+    # If we have the actual temperature, add it to the prompt
+    if actual_temp is not None:
+        weather_results_prompt += f"""
+    ACTUAL MAXIMUM TEMPERATURE: {actual_temp}°C
     """
 
     try:
@@ -134,3 +142,4 @@ def get_ai_response(persona_choice, city, forecast_data, sunset, user_text):
 
     except Exception:
         return f"Ugh, my brain fried. Just look out the window for goodness sake.", personas["1"]["voice"]
+

@@ -46,3 +46,11 @@ git commit -m "Fixed city memory logic and doing roast returns for legitimate fo
 	#3. "Tomorrow" follow up prompt currently a band aid
 
 git commit -m "git commit -m "Milestone: Transitioned from single-day snapshots to 5-day forecast logic with multi-city context sync."
+
+
+20260329 - Unscheduled working on sassy! Had it in my brain that since i'm focused on privacy, does this app have any issues with it? 
+	It turns out user prompts is the most vulnerbale as that's where code can be input. Of course! I added a 'sanitizer' project to limit user input and ended up reworking a chunk of main.py.
+	Key Features Working:
+		Context-aware city detection ("I'll be in Montreal on Wednesday")
+		Proper date handling (tomorrow, specific days)
+		12-hour time format for sunset display on print and adjusted prompt
