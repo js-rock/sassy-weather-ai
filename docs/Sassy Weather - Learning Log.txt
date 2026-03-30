@@ -54,3 +54,11 @@ git commit -m "git commit -m "Milestone: Transitioned from single-day snapshots 
 		Context-aware city detection ("I'll be in Montreal on Wednesday")
 		Proper date handling (tomorrow, specific days)
 		12-hour time format for sunset display on print and adjusted prompt
+
+	Outstanding tasks:
+	# 1.Test mic / voice commands
+	# 2.Revisit other personalities as they've been neglected to focus on 'sassy'
+	# 3.What about user prompt 'what about {city} weather for the next week?'
+	# 4.Distill app down to an android version
+	# 5.Github push?
+

@@ -13,7 +13,7 @@ import asyncio
 from voice_engine import say_text
 import random
 from sanitizer import sanitize_city, validate_day
-from weather_utils import get_daily_maxes, format_sassy_summary
+from weather_utils import get_daily_maxes, format_sassy_summary, determine_target_date, calculate_wind_chill
 import webbrowser
 import os
 
@@ -101,46 +101,12 @@ def main():
             # Process the data ONCE
             max_data = get_daily_maxes(data) # Syncing the Print Box with the AI's forecast extraction
             all_dates = list(max_data.keys())
-            
-            # Set the defaults properly
-            today = datetime.now().strftime('%Y-%m-%d')
-            
-            # Determine which date to display based on user input
-            target_day = "Today"
-            
-            if "tomorrow" in user_text.lower():
-                target_day = "Tomorrow"
-                if len(all_dates) > 1:
-                    display_date = all_dates[1]  # Tomorrow's date
-                else:
-                    display_date = all_dates[0]  # Fallback to first date
-            
-            elif any(day.lower() in user_text.lower() for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]):
-                # User asked for a specific day
-                user_day = None
-                for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
-                    if day.lower() in user_text.lower():
-                        user_day = day
-                        break
-                
-                if user_day:
-                    target_day = user_day
-                    # Match the day name to the actual date in our data
-                    for date in all_dates:
-                        day_name = datetime.strptime(date, '%Y-%m-%d').strftime('%A')
-                        if day_name.lower() == user_day.lower():
-                            display_date = date
-                            break
-                    else:
-                        # If specific day not found, use today
-                        display_date = today
-                else:
-                    display_date = today
-            
-            else:
-                # Default to today
-                display_date = today
 
+            # =====================================================================
+            # Pull "Today" logic from weather_utils
+            # =====================================================================
+            display_date, target_day = determine_target_date(user_text, all_dates)
+            
 
             # Pull the stats for the chosen day
             stats = max_data[display_date]
@@ -152,12 +118,25 @@ def main():
             utc_sunset = datetime.fromtimestamp(data['city']['sunset'], timezone.utc)
             local_sunset = utc_sunset + timedelta(seconds=offset_seconds)
             sunset = local_sunset.strftime('%I:%M %p')
+            rain_chance = stats['pop'] * 100
+            
+
+            # Wind chill factor
+            # Extract the "Raw Ingredients" from the JSON data
+            temp = data['list'][0]['main']['temp']      # The actual temperature
+            latitude = data['city']['coord']['lat']     # The latitude for hemisphere check
+            wind_degrees = data['list'][0]['wind'].get('deg', 0) # The wind direction
+          
+
+            # Now that the variables exist, call the function
+            wind_chill_context = calculate_wind_chill(temp, wind_speed, latitude, wind_degrees, wind_speed)
+
 
             # Pass the actual temperature to AI for accurate response
             actual_temp = stats['temp']
 
+      
             # Adding Date to Day column
-            # Add this before your print statements:
             date_obj = datetime.strptime(display_date, '%Y-%m-%d')
             formatted_date = date_obj.strftime('%A, %B %d')  # e.g., "Wednesday, March 25"
 
@@ -169,8 +148,9 @@ def main():
             print(f"📅 DAY:       {target_day.upper()} ({formatted_date})")  
             print(f"🌡️  HIGH:       {round(stats['temp'], 1)}°C") # Matches Sassy!
             print(f"🥵 HUMIDITY:  {stats['humidity']}%")
+            print(f"🌧️  RAIN:      {rain_chance:.0f}% chance")
             print(f"☁️  SKY:        {stats['condition'].capitalize()}")
-            print(f"💨 WIND:      {wind_speed} m/s")
+            print(f"💨 WIND:      {wind_speed} m/s ({wind_chill_context})")
             print(f"🌅 SUNSET:    {sunset}")
             print("="*30)
 
