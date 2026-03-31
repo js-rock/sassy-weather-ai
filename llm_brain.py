@@ -72,14 +72,20 @@ def extract_city_from_text(user_input, last_city=None):
     USER SAID: "{user_input}"
 
     STRICT RULES:
-    1. If the user mentions a specific NEW city, return that name.
-    2. 2. SANITIZE TYPOS: If the city is misspelled, correct it to the standard spelling. 
+    1. If the user asks for a day beyond the 5 days from today (e.g., next week, next month), 
+    return: out_of_scope
+    2. If the user mentions a specific NEW city, return that name.
+    3. 2. SANITIZE TYPOS: If the city is misspelled, correct it to the standard spelling. 
        (e.g., 'Sydneey' -> 'Sydney' or 'Hobartt' -> 'Hobart').
-    3. If the user asks a follow-up (like 'how is the wind?', 'is it raining?'), 
+    4. If the user asks a follow-up (like 'how is the wind?', 'is it raining?'), 
        you MUST return the PREVIOUS CITY: {last_city}.
-    3. Only return 'none' if the user is talking absolute gibberish.
-
-    Return ONLY the city name. No sentences.
+    5. Only return 'none' if the user is talking absolute gibberish.
+    Return ONLY the city name, 'out_of_scope', or 'none'. No sentences.
+    6. THERMAL LOGIC:
+    - If temp is 24°C or higher: DO NOT suggest jackets, sweaters, or 'bundling up'. It is warm. Roast them for being dramatic if they complain.
+    - If 'Overcast' and > 22°C: It is humid/muggy, not cold. Mention the 'stale air' instead of a 'chill'.
+    - If temp is below 15°C: Suggest a coat.
+    - If temp is between 16°C and 23°C: Suggest 'light layers'.
     """
 
     try:

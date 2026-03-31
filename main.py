@@ -1,7 +1,9 @@
-#1. Test mic / voice commands
-#2. Revisit other personalities as they've been neglected to focus on 'sassy'
-#3. "Tomorrow" follow up prompt currently a band aid
-#4. How to handle typos
+# 0."What's the weather next week?"
+# 1.GitHub Push 
+# 2.Revisit other personalities as they've been neglected to focus on 'sassy'
+# 3.Local Web UI
+# 4.Mic/Voice Test
+# 5.The Android App
 
 # =================================================================
 # SASSY WEATHER AI - MAIN CONTROL SUITE
@@ -24,7 +26,7 @@ def main():
     ROASTS = [
         "I don't speak moron. Give me a real destination.",
         "Is that even a language? Try typing an actual city.",
-        "My circuits are hurting. Use your words... and a map.",
+        "Your brain must be broken. Use your words... and a map.",
         "You must be on drugs. Please input a location."
     ]
         
@@ -43,7 +45,7 @@ def main():
         # USER INPUT & COMMAND PROCESSING
         # ---------------------------------------------------------
         user_text = input("\nJust ask about the weather already (or type exit): ").strip()
-        
+       
         # Exit Logic
         if user_text.lower() == "exit":
             print("\n" + "=" * 46 + "\nDON'T LET THE APP HIT YOUR ARSE ON THE WAY OUT\n" + "=" * 46)
@@ -55,6 +57,12 @@ def main():
         # ---------------------------------------------------------
         # Sanitize the input
         current_city = extract_city_from_text(user_text, last_city)
+
+        if current_city and current_city.lower().strip() == "out_of_scope":
+            msg = "I'm not a time traveller. I can only check the next five days. Use your brain."
+            print({msg})
+            asyncio.run(say_text(msg, voice_to_use))
+            continue
 
         # Validate city
         if current_city:
@@ -84,13 +92,14 @@ def main():
             print(f"Sassy: {roast}")
             asyncio.run(say_text(roast, voice_to_use))
             continue # Skip the rest of the loop and ask again
+
+        
         
         # We have a valid city! Save it to memory
         last_city = current_city
 
         # 5. FETCH DATA
         data = get_weather_data(last_city)
-
 
             
         if data:   

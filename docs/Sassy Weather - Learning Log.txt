@@ -50,6 +50,7 @@ git commit -m "git commit -m "Milestone: Transitioned from single-day snapshots 
 
 20260329 - Unscheduled working on sassy! Had it in my brain that since i'm focused on privacy, does this app have any issues with it? 
 	It turns out user prompts is the most vulnerbale as that's where code can be input. Of course! I added a 'sanitizer' project to limit user input and ended up reworking a chunk of main.py.
+	Another big feature solved was the accuracy of the data. Refactored the code to get_daily_maxes to scan for the daily high amidst the confusion of OW's 5day/3hr forecast API.
 	Key Features Working:
 		Context-aware city detection ("I'll be in Montreal on Wednesday")
 		Proper date handling (tomorrow, specific days)
@@ -58,7 +59,19 @@ git commit -m "git commit -m "Milestone: Transitioned from single-day snapshots 
 	Outstanding tasks:
 	# 1.Test mic / voice commands
 	# 2.Revisit other personalities as they've been neglected to focus on 'sassy'
-	# 3.What about user prompt 'what about {city} weather for the next week?'
-	# 4.Distill app down to an android version
+	# 3.Distill app down to an android version
 	# 5.Github push?
 
+
+20260330 - Optimised and hardened Sassy persona today adjusting  prompts just not for data accuracy, but to handle user typos (sanitized of course!). 
+	Added precipation to the stats along with wind chill factor that changes between northern/souther hemispehere,
+	by adding to the get_daily_maxes that was figured out yesterday. 
+
+	Oustanding tasks:
+	# 1.GitHub Push 
+	# 2.Revisit other personalities as they've been neglected to focus on 'sassy'
+	# 3.Local Web UI
+	# 4.Mic/Voice Test
+	# 5.The Android App
+		
+git commit --amend -m "Optimized Sassy persona for parsing additional weather data with roasts and location sanitizing and dealing with typos."

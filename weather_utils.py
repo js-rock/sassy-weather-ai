@@ -72,7 +72,13 @@ def calculate_wind_chill(temp_c, wind_kph, lat, deg, speed):
     if lat < 0 and (100 < deg < 260):
         return "a cool breeze from the South"
         
-    return "a standard breeze"
+    if temp_c > 20:
+        return f"a warm {speed} m/s breeze"
+    elif temp_c <15:
+        return f"a chilly {speed} m/s breeze"
+    else:
+        return f"a standard {speed} m/s breeze"
+
 
 
 def get_daily_maxes(data):
