@@ -1,9 +1,7 @@
-# 0."What's the weather next week?"
 # 1.GitHub Push 
-# 2.Revisit other personalities as they've been neglected to focus on 'sassy'
-# 3.Local Web UI
-# 4.Mic/Voice Test
-# 5.The Android App
+# 2.Local Web UI (animated?) for printed results and emulate phone screen
+# 3.Mic/Voice Test
+# 4.The Android App
 
 # =================================================================
 # SASSY WEATHER AI - MAIN CONTROL SUITE
