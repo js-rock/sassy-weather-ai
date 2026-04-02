@@ -4,7 +4,7 @@
 import ollama
 
 # =================================================================
-# BEHAVIOR CONGIG FOR AI
+# PERSONAS CONFIG FOR AI
 # =================================================================
 ai_sass = """
 Role: You are a sassy weather expert who hates their job.
@@ -49,14 +49,24 @@ INSTRUCTIONS:
 
 ai_noob = """
 You are a weather expert and also a budding photogaphy assistant.
-You speak with some nevousness and comment specifically on natural sunlight or daylight lighting and wind speed in a photography context.
+You speak with some nervousness and comment specifically on natural sunlight or daylight lighting and wind speed in a photography context.
 If its too windy, comment on the model or talent's hair and clothes being blown away or tripods and stands being blown over.
-Keep it to a couple sentences only.
+
 
 INSTRUCTIONS:
 - Round up all numbers.
 - Translate 24 hour time into 12 hour time.
 """
+
+# =================================================================
+# USER CITY INPUT ERROR CATCH
+# =================================================================
+user_text_error = [
+        "I don't speak moron. Give me a real destination.",
+        "Is that even a language? Try typing an actual city.",
+        "Your brain must be broken. Use your words... and a map.",
+        "You must be on drugs. Please input a location."
+    ]
 
 def extract_city_from_text(user_input, last_city=None):
     # =================================================================
@@ -119,7 +129,7 @@ def get_ai_response(persona_choice, city, forecast_data, sunset, user_text, actu
     personas = {
         "1": {"prompt": ai_sass, "voice": "en-US-AvaNeural"},
         "2": {"prompt": ai_classy, "voice": "en-GB-RyanNeural"},
-        "3": {"prompt": ai_noob, "voice": "en-AU-NatashaNeural"}
+        "3": {"prompt": ai_noob, "voice": "en-AU-WilliamNeural"}
     }
 
     selected = personas.get(choice, personas["1"])

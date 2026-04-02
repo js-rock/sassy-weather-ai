@@ -75,3 +75,31 @@ git commit -m "git commit -m "Milestone: Transitioned from single-day snapshots 
 	# 5.The Android App
 		
 git commit --amend -m "Optimized Sassy persona for parsing additional weather data with roasts and location sanitizing and dealing with typos."
+
+
+20260331 - Fixed user prompt logic "What's the weather next week?" for the LLM voice to return a custom roast, 
+	as the OpenWeather API is limited to 5 days / 3 hours anyway.
+	Created a github repo 'sassy-weather-ai'. I'm nervous about that.
+	Created a webpage ui via streamlit to see Sassy's results and hopefully interact. A prototype for the evenual
+	android version.
+
+	Outstanding tasks:
+	# 1.Local Web UI (animated?) for printed results and emulate phone screen
+	# 2.Mic/Voice Test
+	# 3.The Android App
+
+git commit -m "Initial Github  commit: Sassy Weather Logic & Security Guardrails"
+
+
+20260402 - Tried to add a ui for the results via webui, suggested to use Streamlit. 
+	But Streamlit has its own language so unfortantely was was beyond my skill level, so I leaned 100% into 'Vibe Coding' with the AI to scaffold it.
+	 It's been a nightmare: constant errors, UI and Logic desyncing, and the AI overwriting my fixes. But, managed to force a sync between Ollama brain and the frontend. 
+	 Discrepancies are mostly dead. It works, but the 'vibe' cost was expensive in time and sanity.
+
+	Outstanding tasks:
+	# 1.Local Web UI (animated?) for printed results and emulate phone screen (mostly done)
+	# 2 Wrong reporting on 'tomorrow' prompt, could be more issues
+	# 3.Mic/Voice Test
+	# 4.The Android App
+
+git commit -m "Factored in webui for Sass's results via Streamlit. Mostly complete, some debugging to do."

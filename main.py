@@ -1,14 +1,15 @@
-# 1.GitHub Push 
-# 2.Local Web UI (animated?) for printed results and emulate phone screen
-# 3.Mic/Voice Test
-# 4.The Android App
+# 1.Local Web UI (animated?) for printed results and emulate phone screen
+# 2.Mic/Voice Test
+# 3.What's the weather for the week? - logic
+# 4.Move from Ollama to a single focused LLM for lower overhead? (part of the android app workflow?)
+# 5.The Android App
 
 # =================================================================
 # SASSY WEATHER AI - MAIN CONTROL SUITE
 # =================================================================
 from weather_api import get_weather_data
 from datetime import datetime, timezone, timedelta
-from llm_brain import get_ai_response, extract_city_from_text
+from llm_brain import get_ai_response, extract_city_from_text, user_text_error
 import asyncio
 from voice_engine import say_text
 import random
@@ -21,12 +22,7 @@ import os
 # CONFIG & MEMORY
 # -------------------------------------------------------------
 def main():
-    ROASTS = [
-        "I don't speak moron. Give me a real destination.",
-        "Is that even a language? Try typing an actual city.",
-        "Your brain must be broken. Use your words... and a map.",
-        "You must be on drugs. Please input a location."
-    ]
+   
         
     last_city = None
     voice_to_use = "en-US-AvaNeural" # Default voice
@@ -66,14 +62,14 @@ def main():
         if current_city:
             validated_city = sanitize_city(current_city)
             if not validated_city:
-                roast = random.choice(ROASTS)
+                roast = random.choice(user_text_error)
                 print(f"Sassy: {roast}")
                 asyncio.run(say_text(roast, voice_to_use))
                 continue
             last_city = validated_city
         else:
             # Handle empty city case
-            roast = random.choice(ROASTS)
+            roast = random.choice(user_text_error)
             print(f"Sassy: {roast}")
             asyncio.run(say_text(roast, voice_to_use))
             continue
@@ -86,7 +82,7 @@ def main():
         
         # THE FORK: Valid City vs. Gibberish
         if not current_city or current_city.lower() == "none":
-            roast = random.choice(ROASTS)
+            roast = random.choice(user_text_error)
             print(f"Sassy: {roast}")
             asyncio.run(say_text(roast, voice_to_use))
             continue # Skip the rest of the loop and ask again
