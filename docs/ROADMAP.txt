@@ -1,0 +1,39 @@
+Sassy Weather AI - Development Phases
+
+Phase 1 The Desktop Titan (COMPLETED ✅)
+
+[x] API Integration (OpenWeather).
+
+[x] Local LLM Integration (Ollama + Gemma 4).
+
+[x] Local Web UI (Streamlit) formatted for Phone View.
+
+[x] 5-Day Forecast Noon Filter & Calendar Math logic.
+
+Phase 2 The AudioVisual Polish (CURRENT 🛠️)
+
+[x] TTS Integration edge-tts with base64 autoplay.
+
+[x] Persona-Voice Sync Ava for Sassy, Andrew for Classy.
+
+[x] Avatar Integration Disgust (Pixar-style) Lottie animations.
+
+[ ] Microphone Input Implement STT (Speech-to-Text) using the webcam mic.
+
+[ ] Visual Pop CSS entry animations for weather metrics.
+
+Phase 3 The Great Port (Flet Transition) 🚀
+
+[ ] Rewrite sassy_ui.py logic into sassy_mobile.py using Flet.
+
+[ ] Ensure Lottie and Audio logic works in the Flet environment.
+
+[ ] Optimize LLM calls for mobile latency (switching to faster inference).
+
+Phase 4 The Android App (The Show Off Build) 📱
+
+[ ] BriefcaseBuildozer Package the Python code into an .apk.
+
+[ ] Installation Sideload onto Android phone for Offline testing.
+
+[ ] The Pitch Record a screen-cap of the app running on a physical device for LinkedInPortfolio.

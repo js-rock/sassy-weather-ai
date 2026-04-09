@@ -29,7 +29,7 @@ CPU: AMD Ryzen 7 9800X3D
 
 RAM: 64GB DDR5 @ 6000MHz
 
-GPU: NVIDIA RTX 3090 (24GB VRAM) — Crucial for running MoE models like GPT-OSS locally at high speed.
+GPU: NVIDIA RTX 3090 (24GB VRAM) — Crucial for running MoE models like Gemma4 locally at high speed.
 
 ### Current Roadmap
 - [x] Integrate OpenWeather API & Ollama.
@@ -39,7 +39,7 @@ GPU: NVIDIA RTX 3090 (24GB VRAM) — Crucial for running MoE models like GPT-OSS
 
 ### Tech Stack
 - **Code:** Python
-- **AI:** Ollama (gpt-oss:20b)
+- **AI:** Ollama (gemma4:26b-a4b-it-q4_K_M)
 - **Data:** OpenWeather 5-Day Forecast API
 - **Audio:** Python Voice Engine
 

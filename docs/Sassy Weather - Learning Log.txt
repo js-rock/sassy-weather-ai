@@ -103,3 +103,22 @@ git commit -m "Initial Github  commit: Sassy Weather Logic & Security Guardrails
 	# 4.The Android App
 
 git commit -m "Factored in webui for Sass's results via Streamlit. Mostly complete, some debugging to do."
+
+
+20260407 - More tweaking with streamlit, its been painful to get it working. Doubly frustrating as its a skill issue for me and i have to
+	lean on the AI for it. Unfortunately it breaks something else everytime it fixes something.
+
+No git commit today.
+
+
+20260408 Sassy_UI via streamlit is mostly done, but the LLM personas got broken along the way. Added basic animations to it.
+	Good news for today at least, we have an Sassy Weather Avatar! She is Sassy_Tabby the cat. I'll look at creating animations
+	for her via comfyui to react to the weather, in sassy ways of course.
+
+	Outstanding tasks:
+	# 1.Local Web UI (animated?) for printed results and emulate phone screen (mostly done)
+	# 2 Wrong reporting on 'tomorrow' prompt, could be more issues
+	# 3.Mic/Voice Test
+	# 4.The Android App
+
+No git commit today

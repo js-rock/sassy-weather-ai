@@ -49,35 +49,33 @@ def determine_target_date(user_text, all_dates):
 # =================================
 # Weather calcs
 # =================================
-def calculate_wind_chill(temp_c, wind_kph, lat, deg, speed):
-    if speed < 2: 
-        return "Calm"
-
-    # Southern Hemisphere (Sydney)
-    if lat < 0:
-        # Widened the window: 130 to 230 degrees covers more of the "South"
-        if 130 <= deg <= 230:
-            return "a chilly Southerly from the ocean"
-        elif 150 <= deg <= 210 and speed > 5:
-            return "a biting Southerly buster from Antarctica"
-        elif 270 <= deg <= 330:
-            return "a hot Westerly from the desert"
-            
-    # Northern Hemisphere
-    else:
-        if 330 <= deg or deg <= 30:
-            return "a freezing Northerly from Siberia"
-    
-    # NEW: If it's coming from the South but not in the "Buster" range
-    if lat < 0 and (100 < deg < 260):
-        return "a cool breeze from the South"
+def calculate_wind_chill(temp, wind_speed, *args):
+    # If the 3rd argument (index 0 of args) exists, it's our wind_deg
+    wind_deg = args[0] if args else None
+    """
+    Calculates wind chill for temperatures <= 10°C and 
+    converts degrees to compass directions.
+    """
+    # 1. Direction Logic
+    direction = ""
+    if wind_deg is not None:
+        directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        idx = round(wind_deg / 45) % 8
+        compass = directions[idx]
         
-    if temp_c > 20:
-        return f"a warm {speed} m/s breeze"
-    elif temp_c <15:
-        return f"a chilly {speed} m/s breeze"
-    else:
-        return f"a standard {speed} m/s breeze"
+        # Sassy flavor for directions
+        if compass == "S": direction = "Southerly "
+        elif compass == "N": direction = "Northerly "
+        elif compass == "W": direction = "Westerly "
+        elif compass == "E": direction = "Easterly "
+        else: direction = f"{compass} "
+
+    # 2. Chill Logic
+    if temp <= 10 and wind_speed > 4.8:
+        chill = 13.12 + 0.6215 * temp - 11.37 * (wind_speed ** 0.16) + 0.3965 * temp * (wind_speed ** 0.16)
+        return f"{direction}Feels like {round(chill, 1)}°C"
+    
+    return f"{direction}Breezy" if wind_speed > 5 else f"{direction}Calm-ish"
 
 
 
@@ -122,5 +120,5 @@ def format_sassy_summary(daily_maxes):
     summary = ""
     for date, info in list(daily_maxes.items())[:5]:
         day = datetime.strptime(date, '%Y-%m-%d').strftime('%A')
-        summary += f"{day}: {info['temp']}°C ({info['condition']}). "
-    return summary
+        summary += f"{day}: {info['temp']}°C ({info['condition']}).\n\n "
+    return summary.strip()

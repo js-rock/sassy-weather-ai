@@ -1,199 +1,273 @@
-# Wrong reporting on 'tomorrow' prompt, could be more issues
-
 import streamlit as st
-import requests
-import os
 import random
+import asyncio
+import os
+import json
+import requests
+import base64
 from dotenv import load_dotenv
 from datetime import datetime
+
+# --- MASTER PIPELINE IMPORTS ---
 from weather_api import get_weather_data
 from sanitizer import sanitize_city
 from llm_brain import extract_city_from_text, user_text_error, get_ai_response
 from weather_utils import (
-    get_current_day_max,
     get_daily_maxes,
-    format_sassy_summary,
     determine_target_date,
     calculate_wind_chill
 )
+from voice_utils import generate_speech_as_b64, get_sassy_voice_html
 
-# ===========================
-# LOAD ENVIRONMENT VARIABLES
-# ===========================
 load_dotenv()
-API_KEY = os.getenv("OPENWEATHER_API_KEY")
+
+# ==========================================
+# SESSION STATE - INITIALIZE
+# ==========================================
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "last_city" not in st.session_state:
+    st.session_state.last_city = None
+if "current_persona" not in st.session_state:
+    st.session_state.current_persona = "Sassy"
 
 # ============
 # UI CONFIG
 # ============
 st.set_page_config(page_title="Sassy Weather", page_icon="🌤️", layout="centered")
-                   
-# ================================
-# CUSTOM CSS TO MIMIC PHONE LAYOUT
-# ================================
+
+# --- VIDEO ASSET PATHS (ComfyUI Renders) ---
+VIDEO_ASSETS = {
+    "hot": "assets/tabby_hot.mp4",
+    "rain": "assets/tabby_rain.mp4",
+    "default": "assets/tabby_idle.mp4"
+}
+
 st.markdown("""
             <style>
-            .stApp {
-                max-width: 450x;
-                margin: 0 auto;
-                border: 1px solid #333;
-                border-radius: 30px;
-                padding: 10px;
-                background-color: #0e1117;
+            .stApp { 
+                max-width: 450px; 
+                margin: 0 auto; 
+                border: 1px solid #333; 
+                border-radius: 30px; 
+                padding: 10px; 
+                background-color: #0e1117; 
             }
-            [data-testid="stMetricValue"] {
-                font-size: 28px;
+            
+            /* Unified Weather Card Styling */
+            .weather-card {
+                position: relative;
+                overflow: hidden;
+                background: rgba(0, 0, 0, 0.4);
+                padding: 24px;
+                border-radius: 24px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                margin-top: 10px;
+                z-index: 1;
+                color: white;
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
             }
-            .stChatInput {
-                padding-bottom: 20px;
+
+            .video-bg {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                z-index: -1;
+                opacity: 0.6;
+                border-radius: 24px;
+            }
+
+            .header-section {
+                margin-bottom: 20px;
+            }
+
+            /* Custom Grid for Metrics inside the Card */
+            .metrics-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+
+            .metric-box {
+                background: rgba(255, 255, 255, 0.1);
+                padding: 12px;
+                border-radius: 12px;
+                backdrop-filter: blur(4px);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .metric-label {
+                font-size: 0.7rem;
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                opacity: 0.8;
+                margin-bottom: 4px;
+            }
+
+            .metric-value {
+                font-size: 1.5rem;
+                font-weight: 800;
+                color: #00ffcc;
+                text-shadow: 1px 1px 2px black;
+            }
+
+            .dashboard-info-flat {
+                background: rgba(0, 0, 0, 0.3);
+                padding: 15px;
+                border-radius: 15px;
+                font-family: 'Courier New', Courier, monospace;
+                border-left: 4px solid #00ffcc;
+                font-size: 0.9rem;
+                color: #f0f0f0;
+                line-height: 1.6;
+                text-shadow: 1px 1px 2px black;
             }
             </style>
-            """, unsafe_allow_html = True)
+            """, unsafe_allow_html=True)
 
-# ================================
-# MAIN CONFIG
-# ================================
-st.title ("💅 Sassy Weather")
+def render_tabby_video(state="default"):
+    """Helper to render the ComfyUI video background."""
+    video_path = VIDEO_ASSETS.get(state, VIDEO_ASSETS["default"])
+    if os.path.exists(video_path):
+        with open(video_path, "rb") as f:
+            video_bytes = f.read()
+            video_b64 = base64.b64encode(video_bytes).decode()
+        return f'<video class="video-bg" autoplay loop muted playsinline><source src="data:video/mp4;base64,{video_b64}" type="video/mp4"></video>'
+    return ""
 
-# ================================
-# SESSION STATE - THE APP'S MEMORY
-# ================================
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+with st.sidebar:
+    st.header("⚙️ Settings")
+    
+    persona_options = ["Sassy", "Classy", "Noob Photographer"]
+    
+    active_persona = st.selectbox(
+        "AI Persona", 
+        persona_options,
+        index=persona_options.index(st.session_state.current_persona)
+    )
+    
+    if active_persona != st.session_state.current_persona:
+        st.session_state.current_persona = active_persona
+        st.session_state.messages = [] 
+        st.rerun()
+
+    voice_map = {
+        "Sassy": "en-US-AvaNeural",
+        "Classy": "en-GB-RyanNeural",
+        "Noob Photographer": "en-AU-WilliamNeural"
+    }
+    target_voice = voice_map.get(active_persona)
+
+    if st.button("Clear All"):
+        st.session_state.last_city = None
+        st.session_state.messages = []
+        st.rerun()
+
+st.title("💅 Sassy Weather")
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        # If there's saved weather data in this message, show it
-        if "weather_data" in message:
-            w = message["weather_data"]
-            st.subheader(f"📍 {w['city']}")
-            st.caption(f"📅 {w['date']}")
-            c1, c2 = st.columns(2)
-            c1.metric("🌡️ HIGH", f"{w['temp']}°C")
-            c2.metric("🥵 HUMIDITY", f"{w['humidity']}%")
-            st.write(f"🌧️ **RAIN:** {w['rain']}%")
-            st.write(f"☁️ **SKY:** {w['sky']}")
-            st.write(f"💨 **WIND:** {w['wind']}")
-            st.write(f"🌅 **SUNSET:** {w['sunset']}")
-            st.divider()
 
-# ================================
-# CHAT INPUT
-# ================================
-if prompt := st.chat_input("Just ask about the weather already."):
+if prompt := st.chat_input("Ask about the weather..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.spinner("Consulting the clouds..."):
-        # City Extraction (llm_brain)
-        current_city = extract_city_from_text(prompt, None)
-
-        # Validation (sanitizer.py)
-        validated_city = sanitize_city(current_city)
-        if not validated_city:
-            validated_city = sanitize_city(prompt.strip())
+        current_city = extract_city_from_text(prompt, st.session_state.last_city)
+        validated_city = sanitize_city(current_city) or sanitize_city(prompt.strip())
 
         if validated_city:
+            st.session_state.last_city = validated_city
             raw_response = get_weather_data(validated_city)
 
             if isinstance(raw_response, dict) and 'list' in raw_response:
                 city_data = raw_response.get('city', {})
-                lat = city_data.get('coord', {}).get('lat', 0)
-                raw_sunset = city_data.get('sunset', 0)
-                sunset_time = datetime.fromtimestamp(raw_sunset).strftime('%I:%M %p')
-
+                live_wind_speed = round(float(raw_response['list'][0]['wind']['speed']), 1)
+                live_wind_deg = raw_response['list'][0]['wind'].get('deg', 0)
+                
+                sunset_time = datetime.fromtimestamp(city_data.get('sunset', 0)).strftime('%I:%M %p')
+                
                 processed_daily_data = get_daily_maxes(raw_response)
-                all_dates = list(processed_daily_data.keys())
-                display_date_str, target_day = determine_target_date(prompt, all_dates)
-
-                # =======================================
-                # Check if user is asking about the week
-                # =======================================
-                is_weekly_request = any(word in prompt.lower() for word in ["week", "forecast", "upcoming"])
+                display_date_str, target_day = determine_target_date(prompt, list(processed_daily_data.keys()))
                 stats = processed_daily_data.get(display_date_str)
                 
-                 # --- LOGIC BRANCH: SINGLE DAY OR WEEKLY ---
-                if stats or is_weekly_request:
+                if stats:
+                    temp_val = round(stats.get('temp', 0), 1)
+                    rain_chance = int(stats.get('pop', 0) * 100)
+                    humidity = stats.get('humidity', 0)
+                    sky_condition = stats.get('condition', 'Unknown').capitalize()
+                    
+                    try:
+                        date_obj = datetime.strptime(display_date_str, '%Y-%m-%d')
+                        formatted_date = date_obj.strftime('%d/%m/%Y')
+                    except:
+                        formatted_date = display_date_str
+
+                    is_raining = rain_chance > 20 or "rain" in sky_condition.lower()
+                    mood = "rain" if is_raining else ("hot" if temp_val > 28 else "default")
+                    wind_chill_context = calculate_wind_chill(temp_val, live_wind_speed, live_wind_deg)
+
+                    # THE FULLY CONSOLIDATED WINDOW
+                    # We build the entire card as ONE string to ensure it renders inside one HTML frame
+                    full_card_html = f'''
+                    <div class="weather-card">
+                        {render_tabby_video(mood)}
+                        
+                        <div style="position: relative; z-index: 2;">
+                            <div class="header-section">
+                                <h2 style="margin:0; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">📍 {validated_city.upper()}</h2>
+                                <p style="margin:0; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); opacity: 0.9;">📅 {target_day.upper()} ({formatted_date})</p>
+                            </div>
+
+                            <div class="metrics-grid">
+                                <div class="metric-box">
+                                    <div class="metric-label">🌡️ High</div>
+                                    <div class="metric-value">{temp_val}°C</div>
+                                </div>
+                                <div class="metric-box">
+                                    <div class="metric-label">🥵 Humidity</div>
+                                    <div class="metric-value">{humidity}%</div>
+                                </div>
+                            </div>
+
+                            <div class="dashboard-info-flat">
+                                🌧️ <b>RAIN:</b> {rain_chance}% chance<br>
+                                ☁️ <b>SKY:</b> {sky_condition}<br>
+                                💨 <b>WIND:</b> {live_wind_speed} m/s ({wind_chill_context})<br>
+                                🌅 <b>SUNSET:</b> {sunset_time}
+                            </div>
+                        </div>
+                    </div>
+                    '''
+                    
+                    st.html(full_card_html)
+                    st.divider()
+
                     with st.chat_message("assistant"):
-                        st.subheader(f"📍 {validated_city.title()}")
+                        ai_text, _ = get_ai_response(
+                            active_persona,
+                            validated_city,
+                            f"Max {temp_val}C, Rain {rain_chance}%, Sky {sky_condition}, Wind {live_wind_speed} {wind_chill_context}",
+                            sunset_time,
+                            prompt,
+                            temp_val
+                        )
+                        st.write(ai_text)
                         
-                        # Only show metrics if we have a specific day selected
-                        if stats:
-                            temp_val = round(stats.get('temp', 0), 1)
-                            humid_val = stats.get('humidity', 0)
-                            rain_chance = int(stats.get('pop', 0) * 100)
-                            wind_speed = stats.get('wind_speed', 5.2)
-                            wind_deg = stats.get('wind_deg', 0)
-                            
-                            wind_chill_context = calculate_wind_chill(temp_val, wind_speed, lat, wind_deg, wind_speed)
-                            
-                            weather_display_title = f"{target_day.upper()}"
-                            st.caption(f"📅 {weather_display_title}")
-                            
-                            col1, col2 = st.columns(2)
-                            col1.metric("🌡️ HIGH", f"{temp_val}°C")
-                            col2.metric("🥵 HUMIDITY", f"{humid_val}%")
-                            st.write(f"🌧️ **RAIN:** {rain_chance}% chance")
-                            st.write(f"☁️ **SKY:** {stats['condition'].capitalize()}")
-                            st.write(f"💨 **WIND:** {wind_speed} m/s ({wind_chill_context})")
-                            st.write(f"🌅 **SUNSET:** {sunset_time}")
-                            st.divider()
-                        else:
-                            # Weekly Mode Header
-                            weather_display_title = "5-DAY OUTLOOK"
-                            st.caption(f"📅 {weather_display_title}")
-                            temp_val, humid_val, rain_chance = "N/A", "N/A", "N/A" # Placeholders for history
-                            stats = {"condition": "Variable"}
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        audio_b64 = loop.run_until_complete(generate_speech_as_b64(ai_text, target_voice))
+                        st.markdown(get_sassy_voice_html(audio_b64), unsafe_allow_html=True)
 
-                        # --- COMMON OUTPUTS ---
-                        weather_summary = format_sassy_summary(processed_daily_data)
-                        verdict_text = f"**Sassy's 5-Day Verdict:**\n\n{weather_summary}"
-                        st.write(verdict_text)
-                        
-                        try:
-                            focus_context = (
-                                f"The user is specifically asking about {target_day} ({display_date_str}). "
-                                f"The metrics the user sees on screen for this day are: High: {temp_val}°C, "
-                                f"Rain: {rain_chance}%, Sky: {stats.get('condition', 'Unknown')}."
-                            )
-                            response_data = get_ai_response(
-                                city=validated_city,
-                                forecast_data=weather_summary,
-                                sunset=sunset_time,
-                                user_text=prompt,
-                                persona_choice="Sassy" 
-                            )
-                            sassy_report = response_data[0] if isinstance(response_data, tuple) else response_data
-                            st.write(sassy_report)
-                            full_assistant_text = f"{verdict_text}\n\n{sassy_report}"
-                        except Exception as e:
-                            error_hint = f"👉 *Sassy: My brain is stalling.*"
-                            st.write(error_hint)
-                            full_assistant_text = f"{verdict_text}\n\n{error_hint}"
-
-                        # Save to history
-                        st.session_state.messages.append({
-                            "role": "assistant", 
-                            "content": full_assistant_text,
-                            "weather_data": {
-                                "city": validated_city.title(),
-                                "date": weather_display_title,
-                                "temp": temp_val,
-                                "humidity": humid_val,
-                                "rain": rain_chance,
-                                "sky": stats.get('condition', 'Unknown').capitalize(),
-                                "wind": "See Verdict",
-                                "sunset": sunset_time
-                            }
-                        })
-                else:
-                    st.error("Sassy: I found the city, but that day is outside my 5-day vision.")
+                    st.session_state.messages.append({"role": "assistant", "content": ai_text})
             else:
-                st.error("Sassy: OpenWeather ghosted us.")
+                st.error("City not found, genius.")
         else:
-            with st.chat_message("assistant"):
-                error_msg = f"Sassy: {random.choice(user_text_error)}"
-                st.write(error_msg)
-                st.session_state.messages.append({"role": "assistant", "content": error_msg})                        
+            st.error(random.choice(user_text_error))

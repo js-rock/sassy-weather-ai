@@ -4,6 +4,11 @@
 import ollama
 
 # =================================================================
+# AI_Model
+# =================================================================
+LLM_MODEL = 'gemma4:26b-a4b-it-q4_K_M'
+
+# =================================================================
 # PERSONAS CONFIG FOR AI
 # =================================================================
 ai_sass = """
@@ -102,7 +107,7 @@ def extract_city_from_text(user_input, last_city=None):
         # =================================================================
         # AI CONFIG
         # =================================================================
-        response = ollama.chat(model='gpt-oss:20b', messages=[
+        response = ollama.chat(LLM_MODEL, messages=[
             {'role': 'system', 'content': prompt},
             {'role': 'user', 'content': user_input}
         ])
@@ -127,11 +132,21 @@ def get_ai_response(persona_choice, city, forecast_data, sunset, user_text, actu
     # =================================================================
     choice = str(persona_choice or "1")
     personas = {
+        "Sassy": {"prompt": ai_sass, "voice": "en-US-AvaNeural"},
         "1": {"prompt": ai_sass, "voice": "en-US-AvaNeural"},
+
+        "Classy": {"prompt": ai_classy, "voice": "en-GB-RyanNeural"},
         "2": {"prompt": ai_classy, "voice": "en-GB-RyanNeural"},
+        
+        "Noob Photographer": {"prompt": ai_noob, "voice": "en-AU-WilliamNeural"},
         "3": {"prompt": ai_noob, "voice": "en-AU-WilliamNeural"}
     }
 
+    # Normalize persona input to handle varying string formats from UI vs Terminal
+    p_key = str(personas).strip()
+    selected = personas.get(p_key, personas["Sassy"])
+
+    # Default to Sassy if something goes wrong
     selected = personas.get(choice, personas["1"])
 
     # This is the key: Passing the user's specific question back to the AI
@@ -148,7 +163,7 @@ def get_ai_response(persona_choice, city, forecast_data, sunset, user_text, actu
     """
 
     try:
-        response = ollama.chat(model='gpt-oss:20b', messages=[
+        response = ollama.chat(LLM_MODEL, messages=[
             {'role': 'system', 'content': selected["prompt"]},
             {'role': 'user', 'content': weather_results_prompt}
         ])
