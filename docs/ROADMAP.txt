@@ -1,39 +1,43 @@
 Sassy Weather AI - Development Phases
 
-Phase 1 The Desktop Titan (COMPLETED ✅)
+Phase 1: The Desktop Titan (COMPLETED ✅)
 
 [x] API Integration (OpenWeather).
 
 [x] Local LLM Integration (Ollama + Gemma 4).
 
-[x] Local Web UI (Streamlit) formatted for Phone View.
+[x] Local Web UI (Streamlit) formatted for "Phone View".
 
-[x] 5-Day Forecast Noon Filter & Calendar Math logic.
+[x] 5-Day Forecast "Noon Filter" & Calendar Math logic.
 
-Phase 2 The AudioVisual Polish (CURRENT 🛠️)
+Phase 2: The Audio/Visual Polish (COMPLETED ✅)
 
-[x] TTS Integration edge-tts with base64 autoplay.
+[x] TTS Integration: edge-tts with base64 autoplay.
 
-[x] Persona-Voice Sync Ava for Sassy, Andrew for Classy.
+[x] Persona-Voice Sync: Ava for Sassy, Andrew for Classy.
 
-[x] Avatar Integration Disgust (Pixar-style) Lottie animations.
+[x] Avatar Integration: High-fidelity ComfyUI Tabby Renders (Hot, Rain, Cold, Wind, Cloudy).
 
-[ ] Microphone Input Implement STT (Speech-to-Text) using the webcam mic.
+[x] Visual Pop: CSS entry animations and black-dip video transitions.
 
-[ ] Visual Pop CSS entry animations for weather metrics.
+[  ] Asset Optimization: Downsample videos (Handbrake/FFmpeg) to 720p/low bitrate for mobile performance.
 
-Phase 3 The Great Port (Flet Transition) 🚀
+[  ] Design Protection: Implement Git LFS or Private Asset Hosting to keep character designs hidden from public repo mirrors.
 
-[ ] Rewrite sassy_ui.py logic into sassy_mobile.py using Flet.
+Phase 3: The Great Port & Voice Inputs (CURRENT 🛠️)
 
-[ ] Ensure Lottie and Audio logic works in the Flet environment.
+[ ] Microphone Input: Implement STT (Speech-to-Text) using the webcam mic.
 
-[ ] Optimize LLM calls for mobile latency (switching to faster inference).
+[ ] Whisper Integration: Connect your RTX 3090 to handle local transcription for "Hands-free" sass.
 
-Phase 4 The Android App (The Show Off Build) 📱
+[ ] Audio Logic: Implement "Digital Gain" controls and noise gating (using your Post-Super knowledge).
 
-[ ] BriefcaseBuildozer Package the Python code into an .apk.
+[ ] Flet Transition: Begin rewriting sassy_ui.py into sassy_mobile.py using the Flet framework.
 
-[ ] Installation Sideload onto Android phone for Offline testing.
+Phase 4: The Android App (The "Show Off" Build) 📱
 
-[ ] The Pitch Record a screen-cap of the app running on a physical device for LinkedInPortfolio.
+[ ] Briefcase/Buildozer: Package the Python code into an .apk.
+
+[ ] Installation: Sideload onto Android phone for "Offline" testing.
+
+[ ] The Pitch: Record a screen-cap of the app running on a physical device for LinkedIn/Portfolio.

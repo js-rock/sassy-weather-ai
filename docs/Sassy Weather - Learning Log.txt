@@ -111,7 +111,7 @@ git commit -m "Factored in webui for Sass's results via Streamlit. Mostly comple
 No git commit today.
 
 
-20260408 Sassy_UI via streamlit is mostly done, but the LLM personas got broken along the way. Added basic animations to it.
+20260408 - Sassy_UI via streamlit is mostly done, but the LLM personas got broken along the way. Added basic animations to it.
 	Good news for today at least, we have an Sassy Weather Avatar! She is Sassy_Tabby the cat. I'll look at creating animations
 	for her via comfyui to react to the weather, in sassy ways of course.
 
@@ -122,3 +122,8 @@ No git commit today.
 	# 4.The Android App
 
 No git commit today
+
+20260409 - Success! Finally got Streamlit to display the UI of the weather, personalities + voices working correctly! That took almost 5 days to get working right!
+	Will git commit this for now as it's a good spot to fall back to in case everything gets FUBAR again.
+
+	

@@ -5,3 +5,4 @@ weather_history.txt
 __pycache__/
 *pyc
 test.py
+assets/

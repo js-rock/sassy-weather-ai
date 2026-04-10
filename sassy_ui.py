@@ -6,7 +6,7 @@ import json
 import requests
 import base64
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 # --- MASTER PIPELINE IMPORTS ---
 from weather_api import get_weather_data
@@ -40,7 +40,10 @@ st.set_page_config(page_title="Sassy Weather", page_icon="🌤️", layout="cent
 VIDEO_ASSETS = {
     "hot": "assets/tabby_hot.mp4",
     "rain": "assets/tabby_rain.mp4",
-    "default": "assets/tabby_idle.mp4"
+    "cold": "assets/tabby_cold.mp4",
+    "windy": "assets/tabby_wind.mp4",
+    "cloudy": "assets/tabby_cloudy.mp4", 
+    "default": "assets/tabby_sun.mp4"    
 }
 
 st.markdown("""
@@ -54,11 +57,48 @@ st.markdown("""
                 background-color: #0e1117; 
             }
             
-            /* Unified Weather Card Styling */
+            /* KEYFRAMES FOR ANIMATION */
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            @keyframes fadeOutOverlay {
+                0% { opacity: 1; visibility: visible; }
+                100% { opacity: 0; visibility: hidden; }
+            }
+
+            @keyframes slideInRight {
+                from { 
+                    opacity: 0; 
+                    transform: translateX(100px); 
+                }
+                to { 
+                    opacity: 1; 
+                    transform: translateX(0); 
+                }
+            }
+
+            @keyframes pulseMarker {
+                0% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.7; transform: scale(1.1); }
+                100% { opacity: 1; transform: scale(1); }
+            }
+
+            /* Video Loop Fade: 5s loop with black dip */
+            @keyframes videoLoopFade {
+                0% { opacity: 0; } 
+                5% { opacity: 0; } 
+                15% { opacity: 0.6; } 
+                85% { opacity: 0.6; } 
+                95% { opacity: 0; } 
+                100% { opacity: 0; } 
+            }
+
             .weather-card {
                 position: relative;
                 overflow: hidden;
-                background: rgba(0, 0, 0, 0.4);
+                background: #000000; /* OLED-friendly true black fallback */
                 padding: 24px;
                 border-radius: 24px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
@@ -66,6 +106,26 @@ st.markdown("""
                 z-index: 1;
                 color: white;
                 box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+                animation: fadeIn 0.8s ease-in-out forwards;
+            }
+
+            .weather-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #0e1117; 
+                z-index: 10;
+                pointer-events: none;
+                animation: fadeOutOverlay 0.6s ease-out 0.2s forwards;
+            }
+
+            .dashboard-slide-layer {
+                position: relative; 
+                z-index: 2;
+                opacity: 0; 
+                animation: slideInRight 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.8s forwards;
             }
 
             .video-bg {
@@ -78,54 +138,62 @@ st.markdown("""
                 z-index: -1;
                 opacity: 0.6;
                 border-radius: 24px;
+                background-color: black;
+                animation: videoLoopFade 5s infinite;
             }
 
-            .header-section {
-                margin-bottom: 20px;
+            .header-section { 
+                margin-bottom: 20px; 
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
             }
 
-            /* Custom Grid for Metrics inside the Card */
-            .metrics-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 15px;
-                margin-bottom: 20px;
+            .header-row {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            /* Improved fixed width wrapper with better centering */
+            .icon-fixed-width {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 32px; 
+                height: 32px;
+                flex-shrink: 0;
+                font-size: 1.4rem; 
             }
 
-            .metric-box {
-                background: rgba(255, 255, 255, 0.1);
-                padding: 12px;
-                border-radius: 12px;
-                backdrop-filter: blur(4px);
-                border: 1px solid rgba(255, 255, 255, 0.05);
+            .location-marker { 
+                animation: pulseMarker 2s infinite ease-in-out; 
             }
 
-            .metric-label {
-                font-size: 0.7rem;
-                font-weight: bold;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                opacity: 0.8;
-                margin-bottom: 4px;
+            .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+            
+            .metric-box { 
+                background: rgba(0, 0, 0, 0.3); /* Darkened opacity to match results */
+                padding: 12px; 
+                border-radius: 12px; 
+                backdrop-filter: blur(4px); 
+                border: 1px solid rgba(255, 255, 255, 0.05); 
+                text-align: center; /* Centering content */
             }
-
-            .metric-value {
-                font-size: 1.5rem;
-                font-weight: 800;
-                color: #00ffcc;
-                text-shadow: 1px 1px 2px black;
-            }
-
-            .dashboard-info-flat {
-                background: rgba(0, 0, 0, 0.3);
-                padding: 15px;
-                border-radius: 15px;
-                font-family: 'Courier New', Courier, monospace;
-                border-left: 4px solid #00ffcc;
-                font-size: 0.9rem;
-                color: #f0f0f0;
-                line-height: 1.6;
-                text-shadow: 1px 1px 2px black;
+            
+            .metric-label { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
+            .metric-value { font-size: 1.5rem; font-weight: 800; color: #00ffcc; text-shadow: 1px 1px 2px black; }
+            
+            .dashboard-info-flat { 
+                background: rgba(0, 0, 0, 0.3); 
+                padding: 12px 15px; 
+                border-radius: 15px; 
+                font-family: 'Courier New', Courier, monospace; 
+                border-left: 4px solid #00ffcc; 
+                font-size: 0.82rem; /* Scaled down from 0.9rem to prevent wrapping */
+                color: #f0f0f0; 
+                line-height: 1.5; 
+                text-shadow: 1px 1px 2px black; 
             }
             </style>
             """, unsafe_allow_html=True)
@@ -142,27 +210,14 @@ def render_tabby_video(state="default"):
 
 with st.sidebar:
     st.header("⚙️ Settings")
-    
     persona_options = ["Sassy", "Classy", "Noob Photographer"]
-    
-    active_persona = st.selectbox(
-        "AI Persona", 
-        persona_options,
-        index=persona_options.index(st.session_state.current_persona)
-    )
-    
+    active_persona = st.selectbox("AI Persona", persona_options, index=persona_options.index(st.session_state.current_persona))
     if active_persona != st.session_state.current_persona:
         st.session_state.current_persona = active_persona
         st.session_state.messages = [] 
         st.rerun()
-
-    voice_map = {
-        "Sassy": "en-US-AvaNeural",
-        "Classy": "en-GB-RyanNeural",
-        "Noob Photographer": "en-AU-WilliamNeural"
-    }
+    voice_map = {"Sassy": "en-US-AvaNeural", "Classy": "en-GB-RyanNeural", "Noob Photographer": "en-AU-WilliamNeural"}
     target_voice = voice_map.get(active_persona)
-
     if st.button("Clear All"):
         st.session_state.last_city = None
         st.session_state.messages = []
@@ -185,16 +240,17 @@ if prompt := st.chat_input("Ask about the weather..."):
 
         if validated_city:
             st.session_state.last_city = validated_city
-            raw_response = get_weather_data(validated_city)
+            data = get_weather_data(validated_city)
 
-            if isinstance(raw_response, dict) and 'list' in raw_response:
-                city_data = raw_response.get('city', {})
-                live_wind_speed = round(float(raw_response['list'][0]['wind']['speed']), 1)
-                live_wind_deg = raw_response['list'][0]['wind'].get('deg', 0)
-                
-                sunset_time = datetime.fromtimestamp(city_data.get('sunset', 0)).strftime('%I:%M %p')
-                
-                processed_daily_data = get_daily_maxes(raw_response)
+            if isinstance(data, dict) and 'list' in data:
+                offset_seconds = data['city'].get('timezone', 0)
+                city_data = data.get('city', {})
+                live_wind_speed = round(float(data['list'][0]['wind']['speed']), 1)
+                live_wind_deg = data['list'][0]['wind'].get('deg', 0)
+                utc_sunset = datetime.fromtimestamp(data['city']['sunset'], timezone.utc)
+                local_sunset = utc_sunset + timedelta(seconds=offset_seconds)
+                sunset_time = local_sunset.strftime('%I:%M %p')
+                processed_daily_data = get_daily_maxes(data)
                 display_date_str, target_day = determine_target_date(prompt, list(processed_daily_data.keys()))
                 stats = processed_daily_data.get(display_date_str)
                 
@@ -210,22 +266,41 @@ if prompt := st.chat_input("Ask about the weather..."):
                     except:
                         formatted_date = display_date_str
 
-                    is_raining = rain_chance > 20 or "rain" in sky_condition.lower()
-                    mood = "rain" if is_raining else ("hot" if temp_val > 28 else "default")
+                    # --- ENHANCED MOOD DETECTION (Priority Stack) ---
+                    if rain_chance > 20 or "rain" in sky_condition.lower():
+                        mood = "rain"
+                    elif temp_val > 28:
+                        mood = "hot"
+                    elif temp_val < 13:
+                        mood = "cold"
+                    elif live_wind_speed > 8:
+                        mood = "windy"
+                    elif any(word in sky_condition.lower() for word in ["overcast", "cloud", "mist", "fog"]):
+                        mood = "cloudy"
+                    else:
+                        mood = "default"
+                    
                     wind_chill_context = calculate_wind_chill(temp_val, live_wind_speed, live_wind_deg)
 
-                    # THE FULLY CONSOLIDATED WINDOW
-                    # We build the entire card as ONE string to ensure it renders inside one HTML frame
                     full_card_html = f'''
                     <div class="weather-card">
+                        <div class="weather-overlay"></div>
                         {render_tabby_video(mood)}
-                        
-                        <div style="position: relative; z-index: 2;">
+                        <div class="dashboard-slide-layer">
                             <div class="header-section">
-                                <h2 style="margin:0; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">📍 {validated_city.upper()}</h2>
-                                <p style="margin:0; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); opacity: 0.9;">📅 {target_day.upper()} ({formatted_date})</p>
+                                <div class="header-row">
+                                    <div class="icon-fixed-width location-marker">📍</div>
+                                    <div style="font-size: 1.6rem; font-weight: 900; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); line-height: 1.1; letter-spacing: 0.5px;">
+                                        {validated_city.upper()}
+                                    </div>
+                                </div>
+                                <div class="header-row">
+                                    <div class="icon-fixed-width">📅</div>
+                                    <div style="font-size: 1.1rem; font-weight: 700; text-shadow: 1px 1px 3px rgba(0,0,0,0.9); color: #ddd; line-height: 1.1;">
+                                        {target_day.upper()} ({formatted_date})
+                                    </div>
+                                </div>
                             </div>
-
                             <div class="metrics-grid">
                                 <div class="metric-box">
                                     <div class="metric-label">🌡️ High</div>
@@ -236,7 +311,6 @@ if prompt := st.chat_input("Ask about the weather..."):
                                     <div class="metric-value">{humidity}%</div>
                                 </div>
                             </div>
-
                             <div class="dashboard-info-flat">
                                 🌧️ <b>RAIN:</b> {rain_chance}% chance<br>
                                 ☁️ <b>SKY:</b> {sky_condition}<br>
@@ -246,26 +320,14 @@ if prompt := st.chat_input("Ask about the weather..."):
                         </div>
                     </div>
                     '''
-                    
                     st.html(full_card_html)
                     st.divider()
 
                     with st.chat_message("assistant"):
-                        ai_text, _ = get_ai_response(
-                            active_persona,
-                            validated_city,
-                            f"Max {temp_val}C, Rain {rain_chance}%, Sky {sky_condition}, Wind {live_wind_speed} {wind_chill_context}",
-                            sunset_time,
-                            prompt,
-                            temp_val
-                        )
+                        ai_text, _ = get_ai_response(active_persona, validated_city, f"Max {temp_val}C, Rain {rain_chance}%, Sky {sky_condition}, Wind {live_wind_speed} {wind_chill_context}", sunset_time, prompt, temp_val)
                         st.write(ai_text)
-                        
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        audio_b64 = loop.run_until_complete(generate_speech_as_b64(ai_text, target_voice))
+                        audio_b64 = asyncio.run(generate_speech_as_b64(ai_text, target_voice))
                         st.markdown(get_sassy_voice_html(audio_b64), unsafe_allow_html=True)
-
                     st.session_state.messages.append({"role": "assistant", "content": ai_text})
             else:
                 st.error("City not found, genius.")
