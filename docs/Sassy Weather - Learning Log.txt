@@ -126,6 +126,15 @@ No git commit today
 20260409 - Success! Finally got Streamlit to display the UI of the weather, personalities + voices working correctly! That took almost 5 days to get working right!
 	Will git commit this for now as it's a good spot to fall back to in case everything gets FUBAR again.
 
+No git commit today.
+
 2026010 - Created some renders of the Sassy Avatar - A sassy tabby cat, and managed to animate it. Managed to get streamlit to dispplay the correct sassy_tabby render
 	with the correct weather. Its beautiful!
 	A lot of UI customisation also.	
+
+git commit -m "Milestone - added renders of 'Sassy Tabby Cat' to correctly match the video theme to the reported weather"
+
+20260415 - Added Whisper to streamlit and successfully added voice command. This is to prep for the eventual android / macos personal ports.
+
+git commit -m "Phase 3: Whisper Integration & File Cleanup"
+Extra commit today! Factored in security measures for text and prompt injections. -m "Security: implement input sanitization and prompt injection safeguards"

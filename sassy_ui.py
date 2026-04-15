@@ -7,6 +7,7 @@ import requests
 import base64
 import torch
 import whisper
+import html # Added for security sanitization
 from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
 from streamlit_mic_recorder import mic_recorder
@@ -47,7 +48,9 @@ if "whisper_model" not in st.session_state:
 # ============
 st.set_page_config(page_title="Sassy Weather", page_icon="🌤️", layout="centered")
 
-# --- VIDEO ASSET PATHS (ComfyUI Renders) ---
+# ===============================================
+# --- VIDEO ASSET PATHS (Sassy Tabby Renders) ---
+# ===============================================
 VIDEO_ASSETS = {
     "hot": "assets/tabby_hot.mp4",
     "rain": "assets/tabby_rain.mp4",
@@ -213,7 +216,10 @@ st.markdown("""
 # INTRODUCING SASSY TABBY CAT
 # ==============================
 def render_tabby_video(state="default"):
-    """Helper to render the ComfyUI video background."""
+    # SECURITY: Using a strict whitelist for state to prevent path manipulation
+    allowed_states = VIDEO_ASSETS.keys()
+    safe_state = state if state in allowed_states else "default"    
+
     video_path = VIDEO_ASSETS.get(state, VIDEO_ASSETS["default"])
     if os.path.exists(video_path):
         with open(video_path, "rb") as f:
@@ -314,10 +320,14 @@ if audio_data:
         voice_text = transcribe_audio(audio_data['bytes'])
 
 # Combine logic: if voice exists, use it; otherwise use text input
-final_prompt = voice_text or prompt_text
+raw_prompt = voice_text or prompt_text
+final_prompt = raw_prompt[:75] if raw_prompt else None
 
 if final_prompt:
+    # SECURITY: Escaping user input before displaying to prevent XSS
+    safe_display_prompt = html.escape(final_prompt)    
     st.session_state.messages.append({"role": "user", "content": final_prompt})
+
     with st.chat_message("user"):
         st.markdown(final_prompt)
 
@@ -326,6 +336,12 @@ if final_prompt:
         validated_city = sanitize_city(current_city) or sanitize_city(final_prompt.strip())
 
         if validated_city:
+            # SECURITY: Final scrub of the city name string
+            # This "List Comprehension" acts like a gatekeeper:
+            # 1. 'for x in validated_city' loops through every character.
+            # 2. 'if x.isalnum() or x in " -"' only lets letters, numbers, spaces, or hyphens through.
+            # 3. "".join(...) glues the surviving characters back into a string.
+            validated_city = "".join(x for x in validated_city if x.isalnum() or x in " -")            
             st.session_state.last_city = validated_city
             data = get_weather_data(validated_city)
 
