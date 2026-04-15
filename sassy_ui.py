@@ -5,8 +5,11 @@ import os
 import json
 import requests
 import base64
+import torch
+import whisper
 from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
+from streamlit_mic_recorder import mic_recorder
 
 # --- MASTER PIPELINE IMPORTS ---
 from weather_api import get_weather_data
@@ -30,6 +33,14 @@ if "last_city" not in st.session_state:
     st.session_state.last_city = None
 if "current_persona" not in st.session_state:
     st.session_state.current_persona = "Sassy"
+
+# --- WHISPER INITIALIZATION (Optimized for RTX 3090) ---
+if "whisper_model" not in st.session_state:
+    with st.spinner("Waking up the 3090..."):
+        # Corrected the typo: cuda.is_available()
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        # Using 'base' for speed, but your 3090 could easily handle 'medium' if you wanted
+        st.session_state.whisper_model = whisper.load_model("base", device=device)
 
 # ============
 # UI CONFIG
@@ -181,8 +192,8 @@ st.markdown("""
                 text-align: center; /* Centering content */
             }
             
-            .metric-label { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
-            .metric-value { font-size: 1.5rem; font-weight: 800; color: #00ffcc; text-shadow: 1px 1px 2px black; }
+            .metric-label { font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
+            .metric-value { font-size: 1.7rem; font-weight: 800; color: #00ffcc; text-shadow: 1px 1px 2px black; }
             
             .dashboard-info-flat { 
                 background: rgba(0, 0, 0, 0.3); 
@@ -198,6 +209,9 @@ st.markdown("""
             </style>
             """, unsafe_allow_html=True)
 
+# ==============================
+# INTRODUCING SASSY TABBY CAT
+# ==============================
 def render_tabby_video(state="default"):
     """Helper to render the ComfyUI video background."""
     video_path = VIDEO_ASSETS.get(state, VIDEO_ASSETS["default"])
@@ -208,6 +222,51 @@ def render_tabby_video(state="default"):
         return f'<video class="video-bg" autoplay loop muted playsinline><source src="data:video/mp4;base64,{video_b64}" type="video/mp4"></video>'
     return ""
 
+# ==============================
+# TRANSCRIBE VOICE INPUT
+# ==============================
+def transcribe_audio(audio_bytes):
+    if not audio_bytes:
+        return None
+    
+    ffmpeg_bin_path = r"C:\ffmpeg"
+    if ffmpeg_bin_path not in os.environ["PATH"] :
+        os.environ["PATH"] += os.pathsep + ffmpeg_bin_path
+    
+    temp_filename = f"temp_voice_{os.getpid()}.wav"
+    
+    try:
+        with open (temp_filename, "wb") as f:
+            f.write(audio_bytes)
+
+        # Added "What shall I wear" and "outfit" to the prompt context.
+        # This steers Whisper away from aggressive sounding hallucinations like "Watch your life where".
+        weather_context_prompt = (
+            "Sassy, weather forecast, city names, temperature, humidity, rain chance, "
+            "tomorrow, Sunday, what shall I wear, outfit suggestions, jacket, umbrella."
+        )
+
+        use_fp16 = torch.cuda.is_available()
+        with torch.inference_mode():
+            result = st.session_state.whisper_model.transcribe(
+                temp_filename,
+                fp16=use_fp16,
+                initial_prompt=weather_context_prompt
+                )
+        return result.get("text", "").strip()
+    except Exception as e:
+        st.error(f"Whisper error: {e}")
+        return None
+    finally:
+        if os.path.exists(temp_filename):
+            try:
+                os.remove(temp_filename)
+            except Exception as cleanup_error:
+                print(f"Failed to delete temp whisper file: {cleanup_error}")
+
+# ==============================
+# SIDEBAR FOR PERSONAS
+# ==============================
 with st.sidebar:
     st.header("⚙️ Settings")
     persona_options = ["Sassy", "Classy", "Noob Photographer"]
@@ -223,20 +282,48 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
+# =============
+# MAIN LOGIC
+# =============
 st.title("💅 Sassy Weather")
 
+# ========================
+# --- MIC RECORDING UI ---
+# ========================
+st.markdown('<div class="mic-container">', unsafe_allow_html=True)
+audio_data = mic_recorder(
+    start_prompt="🎤 Start Talking",
+    stop_prompt="🛑 Stop & Process",
+    key='recorder'
+)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Display Chat History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Ask about the weather..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+# ====================================
+# --- HANDLE INPUT (Voice or Text) ---
+# ====================================
+prompt_text = st.chat_input("Ask about the weather...")
+voice_text = None
+
+if audio_data:
+    with st.spinner("3090 is transcribing..."):
+        voice_text = transcribe_audio(audio_data['bytes'])
+
+# Combine logic: if voice exists, use it; otherwise use text input
+final_prompt = voice_text or prompt_text
+
+if final_prompt:
+    st.session_state.messages.append({"role": "user", "content": final_prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(final_prompt)
 
     with st.spinner("Consulting the clouds..."):
-        current_city = extract_city_from_text(prompt, st.session_state.last_city)
-        validated_city = sanitize_city(current_city) or sanitize_city(prompt.strip())
+        current_city = extract_city_from_text(final_prompt, st.session_state.last_city)
+        validated_city = sanitize_city(current_city) or sanitize_city(final_prompt.strip())
 
         if validated_city:
             st.session_state.last_city = validated_city
@@ -251,7 +338,7 @@ if prompt := st.chat_input("Ask about the weather..."):
                 local_sunset = utc_sunset + timedelta(seconds=offset_seconds)
                 sunset_time = local_sunset.strftime('%I:%M %p')
                 processed_daily_data = get_daily_maxes(data)
-                display_date_str, target_day = determine_target_date(prompt, list(processed_daily_data.keys()))
+                display_date_str, target_day = determine_target_date(final_prompt, list(processed_daily_data.keys()))
                 stats = processed_daily_data.get(display_date_str)
                 
                 if stats:
@@ -324,7 +411,7 @@ if prompt := st.chat_input("Ask about the weather..."):
                     st.divider()
 
                     with st.chat_message("assistant"):
-                        ai_text, _ = get_ai_response(active_persona, validated_city, f"Max {temp_val}C, Rain {rain_chance}%, Sky {sky_condition}, Wind {live_wind_speed} {wind_chill_context}", sunset_time, prompt, temp_val)
+                        ai_text, _ = get_ai_response(active_persona, validated_city, f"Max {temp_val}C, Rain {rain_chance}%, Sky {sky_condition}, Wind {live_wind_speed} {wind_chill_context}", sunset_time, final_prompt, temp_val)
                         st.write(ai_text)
                         audio_b64 = asyncio.run(generate_speech_as_b64(ai_text, target_voice))
                         st.markdown(get_sassy_voice_html(audio_b64), unsafe_allow_html=True)

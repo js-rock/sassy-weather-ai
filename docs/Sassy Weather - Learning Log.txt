@@ -126,4 +126,6 @@ No git commit today
 20260409 - Success! Finally got Streamlit to display the UI of the weather, personalities + voices working correctly! That took almost 5 days to get working right!
 	Will git commit this for now as it's a good spot to fall back to in case everything gets FUBAR again.
 
-	
+2026010 - Created some renders of the Sassy Avatar - A sassy tabby cat, and managed to animate it. Managed to get streamlit to dispplay the correct sassy_tabby render
+	with the correct weather. Its beautiful!
+	A lot of UI customisation also.	

@@ -4,5 +4,6 @@ _Archive/
 weather_history.txt
 __pycache__/
 *pyc
-test.py
+test_gpu.py
 assets/
+venv_sassy/
