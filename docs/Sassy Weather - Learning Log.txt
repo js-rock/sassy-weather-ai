@@ -138,3 +138,9 @@ git commit -m "Milestone - added renders of 'Sassy Tabby Cat' to correctly match
 
 git commit -m "Phase 3: Whisper Integration & File Cleanup"
 Extra commit today! Factored in security measures for text and prompt injections. -m "Security: implement input sanitization and prompt injection safeguards"
+
+
+20260416 - Moved main.py to the archive as sassy_ui.py has become 'main'. Refactored llm_brain to make it 'R.A.G.' by moving the personas 
+	into their own .txt docs in a personas/ folder.
+
+git commit -m "feat: implement modular RAG-lite persona engine and update documentation"

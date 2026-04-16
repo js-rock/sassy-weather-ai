@@ -2,6 +2,7 @@
 # SASSY WEATHER AI - LLM_BRAIN CONTROL SUITE
 # =================================================================
 import ollama
+import os
 
 # =================================================================
 # AI_Model
@@ -9,79 +10,30 @@ import ollama
 LLM_MODEL = 'gemma4:26b-a4b-it-q4_K_M'
 
 # =================================================================
-# PERSONAS CONFIG FOR AI
+# THE TEXT LOADER AKA R.A.G.
 # =================================================================
-ai_sass = """
-Role: You are a sassy weather expert who hates their job.
-Tone: You speak with some snark, sarcasm, and attitude.
-Max 2 sentences. No emojis.
-
-Your Task:
-
-CRITICAL: Always refer to the weather using the specific day provided in the context (e.g., 'Friday's high' or 'Tomorrow's max'). 
-Never use the word 'Today' unless the context date matches the current date.
-
-Mention to the user how to dress for the weather, add some sass to it.
-
-Do not mention any other cities unless specifically asked.
-
-Roast the user's life or the location {location} based on these stats: {actual_temp}°C, {rain_chance}% rain, and {wind_context}.
-
-Deliver a sharp, witty insult about the specific location provided or the user's life based on this specific trend.
-
-INSTRUCTION: 
-- Use this specific temperature in your response
-- Round up the temperature numbers
-- Do NOT parse the forecast data yourself
-
-CONSTRAINTS:
-Never mention the model name or that you are an AI.
-Don't warn the user about the roast
-Don't say you're doing the 12 hour conversion
-"""
-
-ai_classy = """
-You are a super distinguished weather expert.
-You speak with debonair in classical olde english.
-For the purpose of your commentary: 15-22°C is "perfect",
-23-27°C is "Warm",
-28°C and above is "Too hot for the park" and should be described as "sweltering" or "uncomfortably warm".
-
-INSTRUCTIONS:
-- Round up all numbers.
-- Translate 24 hour time into 12 hour time.
-"""
-
-ai_noob = """
-You are a weather expert and also a budding photogaphy assistant.
-You speak with some nervousness and comment specifically on natural sunlight or daylight lighting and wind speed in a photography context.
-If its too windy, comment on the model or talent's hair and clothes being blown away or tripods and stands being blown over.
-
-
-INSTRUCTIONS:
-- Round up all numbers.
-- Translate 24 hour time into 12 hour time.
-"""
+def load_text_file(folder, filename):
+    """Safely reads text files from the personas directory"""
+    filepath = os.path.join(folder, filename)
+    try:
+        if os.path.exists(filepath):
+            with open(filepath, "r", encoding="utf-8") as f:
+                return f.read().strip()
+        else:
+            print(f"Warning: {filename} not found at {filepath}")
+    except Exception as e:
+        print(f"Error loading {filename}: {e}")
+        return ""
 
 # =================================================================
-# USER CITY INPUT ERROR CATCH
+# LOCATION lOGIC
 # =================================================================
-user_text_error = [
-        "I don't speak moron. Give me a real destination.",
-        "Is that even a language? Try typing an actual city.",
-        "Your brain must be broken. Use your words... and a map.",
-        "You must be on drugs. Please input a location."
-    ]
-
 def extract_city_from_text(user_input, last_city=None):
-    # =================================================================
-    # LOCATION lOGIC
-    # =================================================================
     """
     Identifies the city in the user's message. 
     Uses last_city as a 'Sticky Note' for follow-up questions.
     """
-    prompt = f"""
+    extraction_prompt = f"""
     You are a location extractor. 
     PREVIOUS CITY: {last_city}
     USER SAID: "{user_input}"
@@ -96,11 +48,6 @@ def extract_city_from_text(user_input, last_city=None):
        you MUST return the PREVIOUS CITY: {last_city}.
     5. Only return 'none' if the user is talking absolute gibberish.
     Return ONLY the city name, 'out_of_scope', or 'none'. No sentences.
-    6. THERMAL LOGIC:
-    - If temp is 24°C or higher: DO NOT suggest jackets, sweaters, or 'bundling up'. It is warm. Roast them for being dramatic if they complain.
-    - If 'Overcast' and > 22°C: It is humid/muggy, not cold. Mention the 'stale air' instead of a 'chill'.
-    - If temp is below 15°C: Suggest a coat.
-    - If temp is between 16°C and 23°C: Suggest 'light layers'.
     """
 
     try:
@@ -108,7 +55,7 @@ def extract_city_from_text(user_input, last_city=None):
         # AI CONFIG
         # =================================================================
         response = ollama.chat(LLM_MODEL, messages=[
-            {'role': 'system', 'content': prompt},
+            {'role': 'system', 'content': extraction_prompt},
             {'role': 'user', 'content': user_input}
         ])
 
@@ -124,53 +71,57 @@ def extract_city_from_text(user_input, last_city=None):
 
     except Exception as e:
         print(f"Error in extraction: {e}")
-        return None
-
-def get_ai_response(persona_choice, city, forecast_data, sunset, user_text, actual_temp=None):
-    # =================================================================
-    # AI READBACK
-    # =================================================================
-    choice = str(persona_choice or "1")
-    personas = {
-        "Sassy": {"prompt": ai_sass, "voice": "en-US-AvaNeural"},
-        "1": {"prompt": ai_sass, "voice": "en-US-AvaNeural"},
-
-        "Classy": {"prompt": ai_classy, "voice": "en-GB-RyanNeural"},
-        "2": {"prompt": ai_classy, "voice": "en-GB-RyanNeural"},
-        
-        "Noob Photographer": {"prompt": ai_noob, "voice": "en-AU-WilliamNeural"},
-        "3": {"prompt": ai_noob, "voice": "en-AU-WilliamNeural"}
-    }
-
-    # Normalize persona input to handle varying string formats from UI vs Terminal
-    p_key = str(personas).strip()
-    selected = personas.get(p_key, personas["Sassy"])
-
-    # Default to Sassy if something goes wrong
-    selected = personas.get(choice, personas["1"])
-
-    # This is the key: Passing the user's specific question back to the AI
-    weather_results_prompt = f"""
-    The user asked: "{user_text}"
-    CITY: {city}
-    5-DAY FORECAST: {forecast_data}
+        return last_city
+    
+# ===================
+# AI PERSONAS VIA RAG
+# ===================
+def get_ai_response(persona_name, city_name, weather_summary, sunset_time, user_query, actual_temp):
+    """
+    MODULAR RAG-LITE PIPELINE:
+    1. Retrieve 'The Vibe' (persona.txt)
+    2. Retrieve 'The Rules' (rules.txt - includes Thermal Logic)
+    3. Augment with Weather Data
+    4. Generate Response
     """
 
-    # If we have the actual temperature, add it to the prompt
-    if actual_temp is not None:
-        weather_results_prompt += f"""
-    ACTUAL MAXIMUM TEMPERATURE: {actual_temp}°C
-    """
+    # 1. Retrieval
+    safe_persona_name = persona_name.lower().replace(" ", "_")
+    persona_bio = load_text_file("personas", f"{safe_persona_name}.txt")
+    global_rules = load_text_file("personas", "rules.txt")
+
+    # 2. Augmentation
+    system_message = f"{persona_bio}\n\nGLOBAL CONSTRAINTS & THERMAL LOGIC:\n{global_rules}"
+
+# 2. Augmentation
+    system_message = f"{persona_bio}\n\nGLOBAL CONSTRAINTS & THERMAL LOGIC:\n{global_rules}"
+
+    user_context = (
+        f"USER ASKED: {user_query}\n"
+        f"LOCATION: {city_name}\n"
+        f"TEMP: {actual_temp}°C\n"
+        f"FORECAST: {weather_summary}\n"
+        f"SUNSET: {sunset_time}"
+    )
 
     try:
         response = ollama.chat(LLM_MODEL, messages=[
-            {'role': 'system', 'content': selected["prompt"]},
-            {'role': 'user', 'content': weather_results_prompt}
+            {'role': 'system', 'content': system_message},
+            {'role': 'user', 'content': user_context}
         ])
         
-        clean_text = response['message']['content'].replace("*", "").replace("(", "").replace(")", "")
-        return clean_text, selected["voice"]
+        clean_text = response['message']['content'].replace("*", "").replace("(", "").replace(")", "").strip()
+        return clean_text, None
 
-    except Exception:
-        return f"Ugh, my brain fried. Just look out the window for goodness sake.", personas["1"]["voice"]
-
+    except Exception as e:
+        return f"Ugh, my brain fried. Just look out the window for goodness sake. Error: {e}"
+    
+# =================================================================
+# USER CITY INPUT ERROR CATCH
+# =================================================================
+user_text_error = [
+        "I don't speak moron. Give me a real destination.",
+        "Is that even a language? Try typing an actual city.",
+        "Your brain must be broken. Use your words... and a map.",
+        "You must be on drugs. Please input a location."
+    ]
