@@ -8,7 +8,7 @@ My focus is on privacy-centric, local-first AI, ensuring that user data never le
 
 ### 🚀 Key Features
 - **API Data Handling:** Managing complex JSON structures from OpenWeather.
-- **Prompt Engineering:** Tailoring multiple local AI personalities with distinct tones and contexts (sassy, classy, noob photogrpaher).
+- **Prompt Engineering:** Tailoring multiple local AI personalities with distinct tones and contexts (sassy, classy, noob photographer).
 - **Python Logic:** Solving real-world data sync and error handling challenges.
 - **Error Handling:** Robust validation with sassy error messages
 - **Privacy Focus:** All processing happens locally with Python +  Ollama
