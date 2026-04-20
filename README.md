@@ -8,7 +8,7 @@ My focus is on privacy-centric, local-first AI, ensuring that user data never le
 
 ### 🚀 Key Features
 - **API Data Handling:** Managing complex JSON structures from OpenWeather.
-- **Prompt Engineering:** Tailoring multiple local AI personalities with distinct tones and contexts (sassy, classy, noob photogrpaher).
+- **Prompt Engineering:** Tailoring multiple local AI personalities with distinct tones and contexts (sassy, classy, noob photographer).
 - **Python Logic:** Solving real-world data sync and error handling challenges.
 - **Error Handling:** Robust validation with sassy error messages
 - **Privacy Focus:** All processing happens locally with Python +  Ollama
@@ -21,9 +21,26 @@ Note: If you have disabled Ollama's autostart, or Ollama isn't running, ensure y
 
 **OpenWeather API Key:** You'll need a free key from OpenWeatherMap.
 
-**Environment Variables:** Create a .env file in the root directory and add: OPENWEATHER_API_KEY=your_key_here
-
 **LLM Model:** gemma4:26b-a4b-it-q4_K_M (changed from gpt-oss:20b (Native MXFP4)).
+
+### ⚙️ Setup & Installation
+
+**Environment Variables:** Create a .env file in the root directory and add:
+
+    OPENWEATHER_API_KEY=your_key_here
+
+
+**Install Dependencies:**
+
+    pip install -r requirements.txt
+
+
+🏃 Quick Start
+
+To launch the application, run the following command in your terminal:
+
+    streamlit run main.py
+
 
 ### 🧠 Architecture: Modular RAG-Lite
 
@@ -47,11 +64,11 @@ This project implements a Retrieval-Augmented Generation (RAG) workflow to manag
 
 This project is optimized for local execution using the following hardware:
 
-CPU: AMD Ryzen 7 9800X3D
+**CPU:** AMD Ryzen 7 9800X3D
 
-RAM: 64GB DDR5 @ 6000MHz
+**RAM:** 64GB DDR5 @ 6000MHz
 
-GPU: NVIDIA RTX 3090 (24GB VRAM) — Crucial for running MoE models like Gemma4 locally and Whisper simultaenously.
+**GPU:** NVIDIA RTX 3090 (24GB VRAM) — Crucial for running MoE models like Gemma4 locally and Whisper simultaenously.
 
 ### 🛠️ Tech Stack
 - **Code:** Python
@@ -65,7 +82,7 @@ GPU: NVIDIA RTX 3090 (24GB VRAM) — Crucial for running MoE models like Gemma4 
 
 - **/personas/:** The RAG Knowledge Base for AI characters.
 
-- **sassy_ui.py:** Main Streamlit entry point & Liquid Layout CSS.
+- **main.py:** Main Streamlit entry point & Liquid Layout CSS.
 
 - **llm_brain.py:** The RAG orchestration and LLM logic.
 

@@ -22,6 +22,7 @@ from weather_utils import (
     calculate_wind_chill
 )
 from voice_utils import generate_speech_as_b64, get_sassy_voice_html
+from audio_utils import apply_digital_gain, is_above_noise_floor
 
 load_dotenv()
 
@@ -34,6 +35,49 @@ if "last_city" not in st.session_state:
     st.session_state.last_city = None
 if "current_persona" not in st.session_state:
     st.session_state.current_persona = "Sassy"
+
+# Initializing Audio defaults if not set
+if "input_gain" not in st.session_state:
+    st.session_state.input_gain = 6
+if "gate_threshold" not in st.session_state:
+    st.session_state.gate_threshold = -40
+
+def get_video_html(video_path):
+    if os.path.exists(video_path):
+        with open (video_path, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+
+        # 'muted' and 'playsinline' are key for Brave/Chrome to allow autoplay
+        return f'''
+            <div style="width: 100%; aspect-ratio: 9/16; background: #000; border-radius: 20px; overflow: hidden;">
+                <video 
+                    width="100%" 
+                    height="100%" 
+                    autoplay 
+                    loop 
+                    muted 
+                    playsinline 
+                    preload="auto"
+                    disablePictureInPicture
+                    style="object-fit: cover;"
+                >
+                    <source src="data:video/mp4;base64,{b64}" type="video/mp4">
+                </video>
+            </div>
+        '''
+    return "Video asset missing."
+
+def reset_app_state():
+    """
+    This function runs BEFORE the page re-renders. 
+    It's the only safe way to modify widget-linked session state.
+    """
+    st.session_state.last_city = None
+    st.session_state.messages = []
+    # Now we can safely modify these because the widgets haven't 'instantiated' for the next run yet
+    st.session_state.input_gain = 6
+    st.session_state.gate_threshold = -40
 
 # --- WHISPER INITIALIZATION (Optimized for RTX 3090) ---
 if "whisper_model" not in st.session_state:
@@ -270,23 +314,29 @@ def transcribe_audio(audio_bytes):
             except Exception as cleanup_error:
                 print(f"Failed to delete temp whisper file: {cleanup_error}")
 
-# ==============================
-# SIDEBAR FOR PERSONAS
-# ==============================
+# ==================================
+# SIDEBAR FOR PERSONAS + MIC CAPTURE
+# ==================================
 with st.sidebar:
     st.header("⚙️ Settings")
     persona_options = ["Sassy", "Classy", "Noob Photographer"]
     active_persona = st.selectbox("AI Persona", persona_options, index=persona_options.index(st.session_state.current_persona))
+
+    st.divider()
+    st.subheader("Audio Signal Path")
+
+    #The gain slider for digital pre-amp
+    input_gain = st.slider("Mic Gain ()dB", min_value=0, max_value=24, value=6, key="input_gain", help="Boost quiet mics before Whisper hears them.")
+    gate_threshold = st.slider("Noise Gate (dB)", min_value=-60, max_value=-20, value=-40, key="gate_threshold", help="Ignores sounds quieter than this (like GPU fans).")
+
     if active_persona != st.session_state.current_persona:
         st.session_state.current_persona = active_persona
         st.session_state.messages = [] 
         st.rerun()
     voice_map = {"Sassy": "en-US-AvaNeural", "Classy": "en-GB-RyanNeural", "Noob Photographer": "en-AU-WilliamNeural"}
     target_voice = voice_map.get(active_persona)
-    if st.button("Clear All"):
-        st.session_state.last_city = None
-        st.session_state.messages = []
-        st.rerun()
+
+    st.button("Clear All", on_click=reset_app_state)
 
 # =============
 # MAIN LOGIC
@@ -310,14 +360,35 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # ====================================
-# --- HANDLE INPUT (Voice or Text) ---
+# --- SIGNAL PROCESSING (Voice or Text) ---
 # ====================================
 prompt_text = st.chat_input("Ask about the weather...")
 voice_text = None
 
 if audio_data:
-    with st.spinner("3090 is transcribing..."):
-        voice_text = transcribe_audio(audio_data['bytes'])
+    raw_bytes = audio_data['bytes']
+
+    # NOISE GATE (Check if anyone is actually talking)
+    if not is_above_noise_floor(raw_bytes, threshold_db=gate_threshold):
+        st.warning("🔇 Audio too quiet. Ignoring room noise.")
+    else:
+        # DIGITAL GAIN (Normalize the signal)
+        with st.spinner(f"Normalizing Signal (+{input_gain}dB)..."):
+            processed_audio = apply_digital_gain(raw_bytes, input_gain)
+            
+        # Whisper inference
+            with st.spinner("3090 is transcribing..."):
+                # We use a temp file because Whisper's .transcribe likes file paths
+                temp_filename = f"temp_process_{os.getpid()}.wav"
+                try:
+                    with open(temp_filename, "wb") as f:
+                        f.write(processed_audio)
+                    
+                    result = st.session_state.whisper_model.transcribe(temp_filename, fp16=torch.cuda.is_available())
+                    voice_text = result.get("text", "").strip()
+                finally:
+                    if os.path.exists(temp_filename):
+                        os.remove(temp_filename)
 
 # Combine logic: if voice exists, use it; otherwise use text input
 raw_prompt = voice_text or prompt_text
@@ -436,3 +507,6 @@ if final_prompt:
                 st.error("City not found, genius.")
         else:
             st.error(random.choice(user_text_error))
+
+# if __name__ == "__main__":
+#     run_sassy_app()

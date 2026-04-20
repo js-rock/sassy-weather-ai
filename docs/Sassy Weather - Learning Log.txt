@@ -144,3 +144,9 @@ Extra commit today! Factored in security measures for text and prompt injections
 	into their own .txt docs in a personas/ folder.
 
 git commit -m "feat: implement modular RAG-lite persona engine and update documentation"
+
+20260420 - Tried to implement n8n for RAG retreival alternative (and to learn it) for today's class but it kept playing silly buggers with permissions and taking an hour so i postponed it for now.
+	Pivoted on integrating cleaning up the ic audio instead with numpy + pydub. Tested and works fine.
+	Renamed sassy_ui.py to main.py to keep in line like an actual development project.
+
+git commit -m "feat: phase 4 audio prep and browser video fix"

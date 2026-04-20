@@ -1,59 +1,65 @@
-Sassy Weather AI - Development Phases
+### Sassy Weather AI - Development Phases
 
-Phase 1: The Desktop Titan (COMPLETED ✅)
+### Phase 1: The Desktop Titan (COMPLETED ✅)
 
-[x] API Integration (OpenWeather).
+- [x] API Integration (OpenWeather).
 
-[x] Local LLM Integration (Ollama + Gemma 4).
+- [x] Local LLM Integration (Ollama + Gemma 4).
 
-[x] Local Web UI (Streamlit) formatted for "Phone View".
+- [x] Local Web UI (Streamlit) formatted for "Phone View".
 
-[x] 5-Day Forecast "Noon Filter" & Calendar Math logic.
+- [x] 5-Day Forecast "Noon Filter" & Calendar Math logic.
 
-Phase 2: The Audio/Visual Polish (COMPLETED ✅)
+### Phase 2: The Audio/Visual Polish (COMPLETED ✅)
 
-[x] TTS Integration: edge-tts with base64 autoplay.
+- [x] TTS Integration: edge-tts with base64 autoplay.
 
-[x] Persona-Voice Sync: Ava for Sassy, Andrew for Classy.
+- [x] Persona-Voice Sync: Ava for Sassy, Andrew for Classy.
 
-[x] Avatar Integration: High-fidelity ComfyUI Tabby Renders.
+- [x] Avatar Integration: High-fidelity ComfyUI Tabby Renders.
 
-[x] Visual Pop: CSS entry animations and black-dip video transitions.
+- [x] Visual Pop: CSS entry animations and black-dip video transitions.
 
-[x] Security: Tightened character limits (75 chars) and isalnum sanitization.
+- [x] Security: Tightened character limits (75 chars) and isalnum sanitization.
 
-Sassy Weather AI - Development Phases
+### Phase 3: The Voice Revolution (COMPLETED ✅)
 
-Phase 3: The Voice Revolution (COMPLETED ✅)
+- [x] 3.1 UI/UX: Mobile-responsive "Liquid Layout" and video assets.
 
-[x] 3.1 UI/UX: Mobile-responsive "Liquid Layout" and video assets.
+- [x] 3.2 Audio: Integrated streamlit-mic-recorder.
 
-[x] 3.2 Audio: Integrated streamlit-mic-recorder.
+- [x] 3.3 Inference: Local Whisper transcription on RTX 3090.
 
-[x] 3.3 Inference: Local Whisper transcription on RTX 3090.
+### Phase 3.4: Persona Engine & Modular RAG (COMPLETED ✅)
 
-Phase 3.4: Persona Engine & Modular RAG (CURRENT 🛠️)
+- [x] Persona Library: Move character bios to /personas/*.txt.
 
-[ ] Persona Library: Move character bios to /personas/*.txt.
+- [x] Global Constraints: Create rules.txt for universal AI behavior (no emojis, length limits).
 
-[ ] Global Constraints: Create rules.txt for universal AI behavior (no emojis, length limits).
+- [x] The Loader: Update llm_brain.py to "stack" prompts dynamically.
 
-[ ] The Loader: Update llm_brain.py to "stack" prompts dynamically.
+### Phase 4: Enterprise Automation (n8n + Docker) 🛠️
 
-Phase 3.5: Desktop Packaging 📦
+- [ ] 4.1 Infrastructure: Set up Docker Desktop to host the n8n Community Edition.
 
-[ ] PyInstaller/Nuitka: Research bundling the Streamlit server into a standalone .exe.
+- [ ] 4.2 The Bridge: Modify main.py to send weather data to n8n via HTTP Webhooks.
 
-Phase 4: The Android App & Pro Audio (CURRENT 🛠️)
+- [ ] 4.3 Visual Workflow: Build a node-based RAG pipeline in n8n (Webhook -> Local File -> Ollama).
 
-[ ] Audio Logic: Implement "Digital Gain" controls and noise gating (using your Post-Super knowledge) to clean up mic input before Whisper hits it.
+- [ ] 4.4 Security: Ensure the .env variables are correctly passed between Python and n8n.
 
-[ ] Flet Transition: Begin rewriting sassy_ui.py into sassy_mobile.py using the Flet framework for a true native feel.
+### Phase 5: The Android App & Pro Audio 📱
 
-[ ] Briefcase/Buildozer: Package the Python code into an .apk.
+- [ ] 5.1 Audio Logic: Implement "Digital Gain" controls and noise gating (using Post-Super knowledge) to clean up mic input before Whisper hits it.
 
-Phase 5: The "Show Off" Build 📱
+- [ ] 5.2 Flet Transition: Begin rewriting sassy_ui.py into sassy_mobile.py using the Flet framework for a true native feel.
 
-[ ] Installation: Sideload onto Android phone for "Offline" testing.
+- [ ] 5.3 Packaging: Use Briefcase or Buildozer to package the Python code into an .apk.
 
-[ ] The Pitch: Record a high-quality screen-cap/demo of the app for the Portfolio.
+###  Phase 6: The "Show Off" Build & Delivery 📦
+
+- [ ] 6.1 Installation: Sideload onto Android phone for "Offline" testing.
+
+- [ ] 6.2 The Pitch: Record a high-quality screen-cap/demo of the app for portfolio showcase.
+
+- [ ] 6.3 Nuitka: Bundle the desktop version into a standalone executable.
