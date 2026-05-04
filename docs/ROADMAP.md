@@ -38,28 +38,20 @@
 
 - [x] The Loader: Update llm_brain.py to "stack" prompts dynamically.
 
-### Phase 4: Enterprise Automation (n8n + Docker) 🛠️
+### Phase 4: Pro Audio & Mobile Transition (CURRENT 🛠️)
 
-- [ ] 4.1 Infrastructure: Set up Docker Desktop to host the n8n Community Edition.
+[x] 4.1 Digital Gain: UI slider to "boost" mic signal before Whisper.
 
-- [ ] 4.2 The Bridge: Modify main.py to send weather data to n8n via HTTP Webhooks.
+[x] 4.2 Noise Gating: Implement decibel threshold to ignore background noise.
 
-- [ ] 4.3 Visual Workflow: Build a node-based RAG pipeline in n8n (Webhook -> Local File -> Ollama).
+[ ] 4.3 Flet Preview: Set up the basic structure for the mobile version (sassy_mobile.py).
 
-- [ ] 4.4 Security: Ensure the .env variables are correctly passed between Python and n8n.
+### Phase 5: External Tooling (Side-Quests) 🤖
 
-### Phase 5: The Android App & Pro Audio 📱
+[x] n8n Research: Completed isolated sandbox testing for CV awareness.
 
-- [ ] 5.1 Audio Logic: Implement "Digital Gain" controls and noise gating (using Post-Super knowledge) to clean up mic input before Whisper hits it.
-
-- [ ] 5.2 Flet Transition: Begin rewriting sassy_ui.py into sassy_mobile.py using the Flet framework for a true native feel.
-
-- [ ] 5.3 Packaging: Use Briefcase or Buildozer to package the Python code into an .apk.
+[ ] Portfolio Reel: Record screen capture showing the local 3090 inference.
 
 ###  Phase 6: The "Show Off" Build & Delivery 📦
 
-- [ ] 6.1 Installation: Sideload onto Android phone for "Offline" testing.
-
-- [ ] 6.2 The Pitch: Record a high-quality screen-cap/demo of the app for portfolio showcase.
-
-- [ ] 6.3 Nuitka: Bundle the desktop version into a standalone executable.
+- [ ] Packaging: Create .apk for Android and standalone .exe.

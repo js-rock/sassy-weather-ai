@@ -82,12 +82,14 @@ This project is optimized for local execution using the following hardware:
 
 - **/personas/:** The RAG Knowledge Base for AI characters.
 
-- **main.py:** Main Streamlit entry point & Liquid Layout CSS.
+- **main.py:** Main Streamlit entry point & Liquid Layout CSS. Also contains an input 'cleanser' since moving to streamlit / webui.
 
 - **llm_brain.py:** The RAG orchestration and LLM logic.
 
 - **weather_utils.py:** Meteorology logic and data transcoding.
 
 - **voice_utils.py:** TTS generation and HTML audio injection.
+
+- **santizer.py:** Original input 'cleanser' for any malicous code injections before hitting the LLM.
 
 **Developed by a Technical Post-Production Supervisor upskilling in AI Engineering.**

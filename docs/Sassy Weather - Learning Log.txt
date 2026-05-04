@@ -145,8 +145,67 @@ Extra commit today! Factored in security measures for text and prompt injections
 
 git commit -m "feat: implement modular RAG-lite persona engine and update documentation"
 
+
 20260420 - Tried to implement n8n for RAG retreival alternative (and to learn it) for today's class but it kept playing silly buggers with permissions and taking an hour so i postponed it for now.
 	Pivoted on integrating cleaning up the ic audio instead with numpy + pydub. Tested and works fine.
 	Renamed sassy_ui.py to main.py to keep in line like an actual development project.
 
+	- Refactored video delivery to use Base64 encoding with HTML5 flags for Brave/Edge compatibility.
+
+	- Integrated Phase 4 digital gain and noise gate sliders in sidebar.
+
+	- Commented out main guard for Streamlit compatibility.
+
+	- Resolved remote desync issue via git pull/merge.
+
+	- Verified stable playback in Edge.
+
 git commit -m "feat: phase 4 audio prep and browser video fix"
+
+
+20260422 - Implemented flet to prep for the Android port - just basic settings for now and hooked to ollama. I still need to understand the code fully,
+	i think everything is reliant on the 'onclick' function. THis is my first time with flet.
+
+	Since there's a need for user input, need to establish the security and sanitsation protocols I made with sanitizer.py and inside main.py since that
+	was refactored into a web UI.
+
+		Outstanding tasks:
+	# 1. Security / Sanitization
+
+	### Objectives
+
+	- Transition the UI from Streamlit to Flet to prepare for a native mobile (.apk) build.
+
+	- Implement asynchronous threading to prevent the UI from freezing during local 26B model inference.
+
+	### Key Concepts Mastered
+
+	- Event-Driven Programming: Moving away from Streamlit's top-down execution to Flet's on_click event handlers.
+
+	- Asyncio Threading: Using asyncio.to_thread to run the Ollama "Brain" in the background while keeping the UI responsive.
+
+	- State Management: Using a local dictionary to provide the LLM with a "sticky note" of the previously mentioned city.
+
+	### Technical Notes
+
+	- Identified that Flet's Stack and Container controls are the keys to porting the "Liquid Layout" video background.
+
+	- Successfully extracted city names from natural language queries using a local Gemma model.
+
+	### Reflections
+
+	The transition to Flet feels more like "real" app development. It's more complex than Streamlit, 
+	but the control over the user experience (and the ability to eventually bundle it as a standalone app) 
+	makes it the right move for an AI Engineering portfolio.
+
+No git commit today.
+
+20260423 - More work with flet, seems more frustrating than trying to work Streamlit! Slowly getting there, it at least talks to the LLM now.
+
+No git commit today.
+
+
+20260430 - Flet was a headache today, had trouble the label fields in the seperate TEMP and HUMIDITY boxes. Finally solved it
+	but it over 3 hours of debugging!
+
+Milestone but no git commit today.
