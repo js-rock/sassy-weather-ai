@@ -209,3 +209,21 @@ No git commit today.
 	but it over 3 hours of debugging!
 
 Milestone but no git commit today.
+
+20260505 - More battles with Flet, has been a nightmare trying to work with MP4 videos. A whole bunch of deprecations to deal with also.
+	managed to get the video player to show now, at least. Worthy of git commit.
+
+git commit -m "managed to integrate flet-video into UI whilst dealing with deprecations. Video still showing blank however."
+
+
+20260506 - Finally managed to get videos in flet working! Needed to install VLC apparently.
+	- Added VLC DLL injection for Windows & absolute path resolving.
+	- Mapped weather conditions to specific mp4 assets (sun/rain/clouds).
+	- Fixed async race conditions and UI scaling for mobile consistency.
+	
+	I'll need to redo the tabby videos so they have dips in between the loops.
+	UI fixes needed as it was all scrambled from multiple tests.
+	Note: if the temp and humidity icon and label dissapers again, the color just needs to be shifted to white or another bright color.
+
+git commit -m "Videos in Flet are now live! It correctly plays the theme according to the weather report. "
+	
