@@ -15,6 +15,13 @@ My focus is on privacy-centric, local-first AI, ensuring that user data never le
 
 As a starting AI enthusiast, I am focused on **privacy-centric AI projects** that keep data local.
 
+### 📁 Media Assets & Privacy
+
+**Note on the /assets directory:**
+This project utilizes proprietary video assets for the character "Sassy Tabby." To protect intellectual property, the /assets folder is included in the .gitignore and is not synced to this public repository.
+
+- **To run this locally:** You must provide your own .mp4 assets (e.g., tabby_sun.mp4, tabby_rain.mp4, tabby_cloudy.mp4) in the root /assets directory.
+
 ### ✏️ Prerequisites
 **Ollama:** Installed and running locally.
 Note: If you have disabled Ollama's autostart, or Ollama isn't running, ensure you run 'ollama serve' in your terminal before launching this app.
@@ -76,7 +83,7 @@ This project is optimized for local execution using the following hardware:
 - **Data:** OpenWeather 5-Day Forecast API
 - **Transcription:** OpenAI Whisper (Base model running on CUDA)
 - **Audio:** Edge-TTS
-- **Frontend:** Streamlit
+- **Frontend:** Streamlit + Flet (for android dev)
 
 ### 📁 Directory Structure
 
@@ -92,4 +99,4 @@ This project is optimized for local execution using the following hardware:
 
 - **santizer.py:** Original input 'cleanser' for any malicous code injections before hitting the LLM.
 
-**Developed by a Technical Post-Production Supervisor upskilling in AI Engineering.**
+**Developed by a Technical Post-Production Supervisor upskilling into AI Engineering.**
