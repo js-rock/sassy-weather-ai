@@ -225,5 +225,24 @@ git commit -m "managed to integrate flet-video into UI whilst dealing with depre
 	UI fixes needed as it was all scrambled from multiple tests.
 	Note: if the temp and humidity icon and label dissapers again, the color just needs to be shifted to white or another bright color.
 
-git commit -m "Videos in Flet are now live! It correctly plays the theme according to the weather report. "
+git commit -m "Videos in Flet are now live! It correctly plays the video theme according to the weather report."
 	
+
+20260507 - Realised the wind logic was broken in this sassy_mobile.py version after putting in 6 hours of work. At least the followup
+	logic now works as well as the voiced output.
+	Also needs fixes:
+	# 23. fix broken wind logic
+	# 24. fix video not updating correctly on followup
+	# 25. add mic input 
+	What a fun day! 😭
+
+No git commit today.
+
+
+20260608 - Big victory today with getting the wind and sunset logic working in Flet!
+	Apparently the video updating on followup not working is a limitation on flet, so we're stuck with the single 
+	video for now.
+
+	Mic input last thing left outstanding (unless we want to revet putting the video behind the weather data like in streamlit).
+
+	git commit -m "Wind and Sunset logic finally translater to flet and working correctly!"

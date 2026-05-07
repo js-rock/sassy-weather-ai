@@ -20,14 +20,20 @@
 # 19. [FIXED] AttributeError: Replaced problematic alignment constants with ft.Alignment(x,y)
 # 20. [DONE] UI: Scaled up labels and icons for better readability
 # 21. [DONE] LOGIC: Implemented Follow-up memory (state["last_city"])
-# 22. [OPEN] Voice commands needed in flet?
+# 22. [DONE] VOICE: Restored Threaded TTS (Voice logic)
+# 23. [DONE] fix broken wind logic
+# 24. [PENDING ]fix video not updating correctly on followup -- Seems to be a FLET limitation
+# 25. add mic input 
+# 26. [DONE] Sunset fix
 
 import flet as ft
 import flet_video as fv
 import asyncio
 import os
 import sys
-from datetime import datetime
+import pyttsx3
+import threading
+from datetime import datetime, timezone, timedelta
 
 # --- VLC DLL INJECTION (FOR WINDOWS) ---
 def init_vlc_env():
@@ -44,6 +50,23 @@ def init_vlc_env():
     return False
 
 init_vlc_env()
+
+# --- THREADED TTS LOGIC ---
+def speak_text_worker(text):
+    """Worker function to handle speech in a separate thread to prevent blocking the UI loop."""
+    try:
+        engine = pyttsx3.init()
+        engine.setProperty('rate', 170)
+        engine.setProperty('volume', 1.0)
+        engine.say(text)
+        engine.runAndWait()
+        engine.stop() 
+    except Exception as e:
+        print(f"TTS Thread Error: {e}")
+
+def say_sass(text):
+    """Triggers the voice output without blocking the main app logic or state updates."""
+    threading.Thread(target=speak_text_worker, args=(text,), daemon=True).start()
 
 # --- ASSET PATH RESOLVER ---
 def get_media_path(filename):
@@ -204,7 +227,6 @@ async def main(page: ft.Page):
         ], spacing=0)
     )
 
-
     async def on_process_click(e):
         if state["is_thinking"]:
             return
@@ -222,8 +244,7 @@ async def main(page: ft.Page):
         page.update()
 
         try:
-            # FOLLOW-UP LOGIC: We pass state["last_city"] into the LLM brain
-            # If the user says "What about tomorrow?", the brain uses last_city to fill the gap.
+            # Brain extraction with memory
             extracted_city = await asyncio.to_thread(extract_city_from_text, user_input, state["last_city"])
             validated_city = sanitize_city(extracted_city)
 
@@ -231,7 +252,6 @@ async def main(page: ft.Page):
                 status_text.value = "Not a real place. Try again."
                 status_text.color = "#ff4444"
             else:
-                # Update persistent memory
                 state["last_city"] = validated_city
                 weather_raw = await asyncio.to_thread(get_weather_data, validated_city)
                 
@@ -247,58 +267,112 @@ async def main(page: ft.Page):
                     
                     metrics = daily_data.get(t_date)
                     
-                    raw_temp = float(metrics.get('temp', 0))
-                    display_temp = round(raw_temp) 
-                    raw_wind = float(metrics.get('wind_speed', 4.5))
+                    display_temp = round(float(metrics.get('temp', 0))) 
+                    # Corrected wind logic lookup
+                    raw_wind = 0.0
+                    try:
+                        if isinstance(weather_raw, dict) and 'list' in weather_raw and len(weather_raw['list']) > 0:
+                            raw_wind = float(weather_raw['list'][0]['wind']['speed'])
+                    except (ValueError, TypeError, KeyError):
+                        raw_wind = 0.0
+
+                    
                     raw_hum = float(metrics.get('humidity', 0))
                     raw_pop = float(metrics.get('pop', 0))
 
                     # Video Mapping
                     condition = metrics['condition'].lower()
                     visual_file = "tabby_sun.mp4"
-                    if "rain" in condition or "drizzle" in condition: visual_file = "tabby_rain.mp4"
-                    elif "cloud" in condition: visual_file = "tabby_cloudy.mp4"
-                    elif raw_wind > 10: visual_file = "tabby_wind.mp4"
-                    elif display_temp < 10: visual_file = "tabby_cold.mp4"
-                    elif display_temp > 30: visual_file = "tabby_hot.mp4"
+
+                    # Check conditions in order of priority
+                    # Get temperature properly
+                    display_temp = round(float(metrics.get('temp', 0))) 
+
+                    # Check conditions in order of priority (most specific first)
+                    if "rain" in condition or "drizzle" in condition: 
+                        visual_file = "tabby_rain.mp4"
+                    elif display_temp < 10:  # Cold condition
+                        visual_file = "tabby_cold.mp4"
+                    elif raw_wind > 7:  # Wind condition
+                        visual_file = "tabby_wind.mp4"
+                    elif "cloud" in condition: 
+                        visual_file = "tabby_cloudy.mp4"
+                    elif "clear" in condition or "sun" in condition:
+                        visual_file = "tabby_sun.mp4"
+
+
+
+                    print(f"Wind speed: {raw_wind} m/s")
+                    print(f"Condition: {condition}")
+                    print(f"Selected video: {visual_file}")
 
                     abs_visual_path = get_media_path(visual_file)
 
+                    # Simple update - just set the playlist and hope it works
                     if abs_visual_path != state["current_video_path"]:
                         try:
+                            print(f"Setting new video: {visual_file}")
+                            
+                            # Simple playlist update - no stop/play needed
                             tabby_visual.playlist = [fv.VideoMedia(abs_visual_path)]
                             state["current_video_path"] = abs_visual_path
                             tabby_visual.update()
-                            await asyncio.sleep(0.4)
-                            try: await tabby_visual.play()
-                            except: pass
-                        except Exception as ve:
-                            print(f"Video Source update failed: {ve}")
+                            
+                            # Force page update
+                            page.update()
+                            
+                            print("Video update completed successfully")
+                            
+                        except Exception as e:
+                            print(f"Video update error: {e}")
+                            # Continue without failing the whole process
+                            pass
+                    else:
+                        print("No video change needed")
+
 
                     # UI Population
                     date_obj = datetime.strptime(t_date, '%Y-%m-%d')
-                    day_str = date_obj.strftime('%A').upper()
-                    short_date = date_obj.strftime('%b %d')
-                    
                     location_display.value = str(validated_city).upper()
-                    date_display.value = f"{day_str} • {short_date}"
+                    date_display.value = f"{date_obj.strftime('%A').upper()} • {date_obj.strftime('%b %d')}"
                     temp_value.value = f"{display_temp}°C"
                     humidity_value.value = f"{int(raw_hum)}%"
                     
                     rain_val.value = f"RAIN: {int(raw_pop * 100)}% chance"
                     sky_val.value = f"SKY: {metrics['condition']}"
-                    wind_val.value = f"WIND: {raw_wind} m/s"
-                    sunset_val.value = "SUNSET: 7:42 PM"
+                    wind_val.value = f"WIND: {round(raw_wind, 1)} m/s"
+                    # Sunset logic with error handling
+                    sunset_time = "SUNSET: ERROR"
+                    try:
+                        if isinstance(weather_raw, dict) and 'city' in weather_raw:
+                            city_data = weather_raw['city']
+                            
+                            # Get timezone offset
+                            offset_seconds = int(city_data.get('timezone', 0))
+                            
+                            # Get sunset timestamp
+                            sunset_timestamp = int(city_data.get('sunset', 0))
+                            
+                            if sunset_timestamp > 0:
+                                # Convert to local time
+                                utc_sunset = datetime.fromtimestamp(sunset_timestamp, timezone.utc)
+                                local_sunset = utc_sunset + timedelta(seconds=offset_seconds)
+                                sunset_time = local_sunset.strftime('%I:%M %p')
+                                sunset_time = f"SUNSET: {sunset_time}"
+                    except Exception as e:
+                        print(f"Error getting sunset time: {e}")
+                        # Keep ERROR fallback
+
+                    sunset_val.value = sunset_time
 
                     ai_text, _ = await asyncio.to_thread(
                         get_ai_response, "Sassy", validated_city, 
-                        f"{display_temp}C, {metrics['condition']}", "7:42 PM", user_input, display_temp
+                        f"{display_temp}C, {metrics['condition']}, {raw_wind}m/s", "7:42 PM", user_input, display_temp
                     )
                     ai_response_display.value = ai_text
                     
                     response_card.visible = True
-                    status_text.value = f"Data for {validated_city} Sync'd."
-                    status_text.color = "#888"
+                    say_sass(ai_text)
                 else:
                     status_text.value = "Weather API failed."
                     status_text.color = "#ff4444"
@@ -319,7 +393,6 @@ async def main(page: ft.Page):
         border_color="#333",
         focused_border_color="#00ffcc",
         width=300,
-        text_size=14,
         on_submit=lambda e: page.run_task(on_process_click, e)
     )
 
@@ -327,27 +400,20 @@ async def main(page: ft.Page):
         "Generate Forecast",
         icon=ft.Icons.AUTO_AWESOME, 
         on_click=lambda e: page.run_task(on_process_click, e),
-        style=ft.ButtonStyle(
-            color="black",
-            bgcolor="#00ffcc",
-            shape=ft.RoundedRectangleBorder(radius=12),
-        )
+        style=ft.ButtonStyle(bgcolor="#00ffcc", color="black")
     )
 
     page.add(
         ft.Column(
             [
                 ft.Container(height=20),
-                ft.Text("💅 Sassy Weather", size=28, weight=ft.FontWeight.W_900, color="white"),
-                ft.Container(height=10),
+                ft.Text("💅 Sassy Weather", size=28, weight=ft.FontWeight.W_900),
                 city_input,
                 process_btn,
-                ft.Container(content=status_text, margin=ft.Margin.only(top=5)),
-                ft.Container(height=20),
+                status_text,
                 response_card,
-                ft.Container(height=40),
             ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            horizontal_alignment="center",
         )
     )
 
