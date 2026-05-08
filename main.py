@@ -482,7 +482,7 @@ def run_sassy_app():
                                         <div class="metric-value">{temp_val}°C</div>
                                     </div>
                                     <div class="metric-box">
-                                        <div class="metric-label">🥵 Humidity</div>
+                                        <div class="metric-label">💧 Humidity</div>
                                         <div class="metric-value">{humidity}%</div>
                                     </div>
                                 </div>

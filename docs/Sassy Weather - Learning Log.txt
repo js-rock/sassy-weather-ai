@@ -239,10 +239,33 @@ git commit -m "Videos in Flet are now live! It correctly plays the video theme a
 No git commit today.
 
 
-20260608 - Big victory today with getting the wind and sunset logic working in Flet!
+20260508 - Big victory today with getting the wind and sunset logic working in Flet!
 	Apparently the video updating on followup not working is a limitation on flet, so we're stuck with the single 
 	video for now.
 
 	Mic input last thing left outstanding (unless we want to revet putting the video behind the weather data like in streamlit).
 
 	git commit -m "Wind and Sunset logic finally translater to flet and working correctly!"
+
+
+20260509 - Having mic input issues with flet - this was the last major feature, but i think i will call it here - 
+	'disable' the mic function as weather + AI LLM logic works 100%, and keep the icon disabled as a visual remoinder. 
+	The only other outstanding is the tabby cat videos not udating on follow-up prompts, but apparently it's a flet limitation.
+
+	Will call this a beta or pre-beta for now. Only making the desktop versions (exe / dmg) then the android app left to go.
+
+	chore: version 0.9-beta "Picture Lock"
+
+	- Established core Sassy Weather logic (RAG-enabled city persistence).
+
+	- Integrated Qwen 2.5 32B via Ollama for personality-driven responses.
+
+	- Implemented VLC-based dynamic video pipeline (Sun/Rain/Wind/Cold).
+
+	- Mobile UI optimized for Pixel 7 (Flet-based).
+
+	- Documented v1.0 Roadmap (Standalone Desktop & Android targets).
+
+	- Flagged experimental features (Voice/Mic) for v1.1.
+
+git commit -m "The Desktop script is stable. Ready for Desktop and Android mastering pass."

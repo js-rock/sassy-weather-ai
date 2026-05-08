@@ -22,8 +22,8 @@
 # 21. [DONE] LOGIC: Implemented Follow-up memory (state["last_city"])
 # 22. [DONE] VOICE: Restored Threaded TTS (Voice logic)
 # 23. [DONE] fix broken wind logic
-# 24. [PENDING ]fix video not updating correctly on followup -- Seems to be a FLET limitation
-# 25. add mic input 
+# 24. [DELAYED ]fix video not updating correctly on followup -- Seems to be a FLET limitation -- flagged for future feature
+# 25. [DELAYED] add mic input  -- flagged for future feature
 # 26. [DONE] Sunset fix
 
 import flet as ft
@@ -32,6 +32,9 @@ import asyncio
 import os
 import sys
 import pyttsx3
+import speech_recognition as sr
+import sounddevice as sd
+import numpy as np
 import threading
 from datetime import datetime, timezone, timedelta
 
@@ -89,6 +92,56 @@ state = {
     "current_video_path": None
 }
 
+# Global variables for UI components
+city_input = None
+process_btn = None
+mic_btn = None
+status_text = None
+response_card = None
+location_display = None
+date_display = None
+temp_value = None
+humidity_value = None
+rain_val = None
+sky_val = None
+wind_val = None
+sunset_val = None
+ai_response_display = None
+tabby_visual = None
+
+def start_listening(page, city_input, on_process_click_func):
+    def listen():
+        try:
+            r = sr.Recognizer()
+            with sr.Microphone() as source:
+                print("Listening...")
+                audio = r.listen(source, timeout=5, phrase_time_limit=5)
+                try:
+                    text = r.recognize_sphinx(audio)
+                    print(f"Recognized: {text}")
+                    # Direct update - this is the simplest approach
+                    city_input.value = text
+                    page.update()
+                    # Call the processing function directly in main thread context
+                    # Use asyncio.create_task to properly schedule it
+                    asyncio.create_task(on_process_click_func(None))
+                    
+                except sr.UnknownValueError:
+                    print("Could not understand audio")
+                    status_text.value = "Could not understand audio"
+                    page.update()
+                except sr.RequestError as e:
+                    print(f"Error: {e}")
+                    status_text.value = f"Speech recognition error: {e}"
+                    page.update()
+        except Exception as e:
+            print(f"Microphone error: {e}")
+            status_text.value = f"Microphone error: {e}"
+            page.update()
+    
+    # Start listening in a separate thread
+    threading.Thread(target=listen, daemon=True).start()
+
 async def main(page: ft.Page):
     # 1. PAGE CONFIG
     page.title = "Sassy Weather Mobile"
@@ -99,7 +152,9 @@ async def main(page: ft.Page):
     page.padding = 20
     page.scroll = ft.ScrollMode.AUTO 
 
-    # 2. UI COMPONENTS
+    # 2. UI COMPONENTS (defined globally for access)
+    global city_input, process_btn, mic_btn, status_text, response_card, location_display, date_display, temp_value, humidity_value, rain_val, sky_val, wind_val, sunset_val, ai_response_display, tabby_visual
+
     location_display = ft.Text(
         value="LOCATION", 
         size=26, 
@@ -196,7 +251,7 @@ async def main(page: ft.Page):
                     border_radius=20,
                     border=ft.Border.all(1, "#333"),
                     content=ft.Column([
-                        ft.Text("🥵 HUMIDITY", size=13, color="#00ffcc", weight=ft.FontWeight.BOLD, style=ft.TextStyle(letter_spacing=1)),
+                        ft.Text("💧 HUMIDITY", size=13, color="#00ffcc", weight=ft.FontWeight.BOLD, style=ft.TextStyle(letter_spacing=1)),
                         ft.Container(height=8),
                         humidity_value,
                     ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
@@ -227,7 +282,17 @@ async def main(page: ft.Page):
         ], spacing=0)
     )
 
-    async def on_process_click(e):
+    # 5. MIC BUTTON - DISABLED VERSION
+    mic_btn = ft.IconButton(
+        icon=ft.Icons.MIC,  # This should work in most Flet versions
+        icon_color="#666666",  # Greyed out color
+        icon_size=30,
+        disabled=True,  # Button is disabled
+        tooltip="Microphone functionality disabled (for development)"
+    )
+
+    # Define on_process_click inside main function to avoid scope issues
+    async def on_process_click(e=None):
         if state["is_thinking"]:
             return
 
@@ -276,7 +341,6 @@ async def main(page: ft.Page):
                     except (ValueError, TypeError, KeyError):
                         raw_wind = 0.0
 
-                    
                     raw_hum = float(metrics.get('humidity', 0))
                     raw_pop = float(metrics.get('pop', 0))
 
@@ -289,18 +353,16 @@ async def main(page: ft.Page):
                     display_temp = round(float(metrics.get('temp', 0))) 
 
                     # Check conditions in order of priority (most specific first)
-                    if "rain" in condition or "drizzle" in condition: 
-                        visual_file = "tabby_rain.mp4"
-                    elif display_temp < 10:  # Cold condition
+                    if display_temp < 10:  # Cold condition
                         visual_file = "tabby_cold.mp4"
+                    elif "rain" in condition or "drizzle" in condition: 
+                        visual_file = "tabby_rain.mp4"
                     elif raw_wind > 7:  # Wind condition
                         visual_file = "tabby_wind.mp4"
                     elif "cloud" in condition: 
                         visual_file = "tabby_cloudy.mp4"
                     elif "clear" in condition or "sun" in condition:
                         visual_file = "tabby_sun.mp4"
-
-
 
                     print(f"Wind speed: {raw_wind} m/s")
                     print(f"Condition: {condition}")
@@ -329,7 +391,6 @@ async def main(page: ft.Page):
                             pass
                     else:
                         print("No video change needed")
-
 
                     # UI Population
                     date_obj = datetime.strptime(t_date, '%Y-%m-%d')
@@ -387,9 +448,10 @@ async def main(page: ft.Page):
             city_input.value = ""
             page.update() 
 
+    # 6. INPUT AND BUTTONS
     city_input = ft.TextField(
-        label="Enter Location or Ask Follow-up",
-        hint_text="e.g. 'What about tomorrow?'",
+        label="Just ask about the weather already",
+        hint_text="e.g. 'What about tomorrow in Sydney?'",
         border_color="#333",
         focused_border_color="#00ffcc",
         width=300,
@@ -398,22 +460,33 @@ async def main(page: ft.Page):
 
     process_btn = ft.FilledButton(
         "Generate Forecast",
-        icon=ft.Icons.AUTO_AWESOME, 
+        icon=ft.Icons.AUTO_FIX_HIGH,
         on_click=lambda e: page.run_task(on_process_click, e),
         style=ft.ButtonStyle(bgcolor="#00ffcc", color="black")
     )
 
+    # 7. ADD ALL COMPONENTS TO PAGE
     page.add(
         ft.Column(
             [
                 ft.Container(height=20),
-                ft.Text("💅 Sassy Weather", size=28, weight=ft.FontWeight.W_900),
-                city_input,
+                ft.Text("💅 Sassy Weather", size=28, weight=ft.FontWeight.W_900, text_align=ft.TextAlign.CENTER),
+                ft.Container(height=10),
+                ft.Row(
+                    [
+                        city_input,
+                        mic_btn
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=10
+                ),
+                ft.Container(height=10),
                 process_btn,
+                ft.Container(height=10),
                 status_text,
                 response_card,
             ],
-            horizontal_alignment="center",
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
     )
 
