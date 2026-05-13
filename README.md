@@ -28,7 +28,9 @@ Note: If you have disabled Ollama's autostart, or Ollama isn't running, ensure y
 
 **OpenWeather API Key:** You'll need a free key from OpenWeatherMap.
 
-**LLM Model:** gemma4:26b-a4b-it-q4_K_M (changed from gpt-oss:20b (Native MXFP4)).
+**LLM Model:** gemma4:26b-a4b-it-q4_K_M (changed from gpt-oss:20b (Native MXFP4)). -- main.py
+               Llama-3.2-3B-Instruct-Q4_K_M.gguf -- desktop port (moved away from ollama dependence)
+
 
 ### ⚙️ Setup & Installation
 

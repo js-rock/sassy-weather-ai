@@ -268,4 +268,18 @@ No git commit today.
 
 	- Flagged experimental features (Voice/Mic) for v1.1.
 
-git commit -m "The Desktop script is stable. Ready for Desktop and Android mastering pass."
+git commit -m "feat: v0.9-beta Picture Lock. The sassy_mobile.py logic is stable. Ready for Desktop and Android pass."
+
+
+20260511 - Tried the desktop 'port' today and it turned out to be really annoying. I tjhought it was simply just move from ollama to a local LLM,
+	But now the AI response is completly random.
+
+No git commit today unless you want it to be filled with swear words 👊
+
+20260512 -  Finally got the desktop video working! It looks beautiful! Other functions broke though when doing this desktop 'port'.
+	Migrated from Ollama to a local model Llama-3.2-3B-Instruct-Q4_K_M.gguf.
+	
+git commit -m "Milestone: Migrated from Ollama to a local model Llama-3.2-3B-Instruct-Q4_K_M.gguf for this desktop port. 
+Enabled video background. Fixed 3:2 aspect ratio geometry. Weather themes and sass correctly mapped via Llama 3 logic."
+
+
