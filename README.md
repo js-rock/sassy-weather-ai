@@ -1,3 +1,5 @@
+https://github.com/user-attachments/assets/b7f3bd20-544b-47ad-a6ff-c55de285f4ac
+
 # 💅 Sassy Weather AI 
 A high-performance, personality-driven weather dashboard that integrates the OpenWeather API with local AI models for privacy-focused, character-driven forecasts.
 
