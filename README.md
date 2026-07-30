@@ -2,7 +2,11 @@
 - *Click the speaker icon to unmute and hear the Sassy persona.*
  
 
-https://github.com/user-attachments/assets/b7f3bd20-544b-47ad-a6ff-c55de285f4ac
+
+
+https://github.com/user-attachments/assets/77042fa2-600e-4498-8341-8b3c5f199ccb
+
+
 
 A high-performance, personality-driven weather dashboard that integrates the OpenWeather API with local AI models for privacy-focused, character-driven forecasts.
 
